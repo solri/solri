@@ -7,3 +7,4 @@ license = "GPL-3.0"
 edition = "2018"
 
 [dependencies]
+primitive-types = "0.4"
