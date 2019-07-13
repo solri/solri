@@ -1,0 +1,9 @@
+[package]
+name = "solri"
+version = "0.1.0"
+authors = ["Wei Tang <hi@that.world>"]
+description = "Rust implementation of a minimal self-governed WebAssembly blockchain"
+license = "GPL-3.0"
+edition = "2018"
+
+[dependencies]
