@@ -8,3 +8,7 @@ edition = "2018"
 
 [dependencies]
 primitive-types = "0.4"
+blockchain = "0.8"
+bm-le = "0.6"
+bm = "0.5"
+sha3 = "0.8"
