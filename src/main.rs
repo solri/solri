@@ -2,6 +2,7 @@ use primitive_types::{H256, H512};
 use bm::Leak;
 use bm_le::{FromTree, IntoTree, tree_root};
 use blockchain::traits::{Block as BlockT};
+use parity_codec::{Encode, Decode};
 use sha3::Sha3_256;
 
 pub type AccountId = u64;
@@ -12,7 +13,7 @@ pub type Public = H256;
 pub type Signature = H512;
 pub type Hash = Sha3_256;
 
-#[derive(Clone, Eq, PartialEq, Debug)]
+#[derive(Clone, Eq, PartialEq, Debug, Encode, Decode)]
 pub enum TransferId {
     Existing(AccountId),
     New(Public),
@@ -62,7 +63,7 @@ impl<DB> IntoTree<DB> for TransferId where
     }
 }
 
-#[derive(Clone, Eq, PartialEq, Debug, FromTree, IntoTree)]
+#[derive(Clone, Eq, PartialEq, Debug, FromTree, IntoTree, Encode, Decode)]
 pub struct UnsealedBlock {
     pub parent_id: H256,
     pub state_root: H256,
@@ -70,7 +71,7 @@ pub struct UnsealedBlock {
     pub transactions: Vec<Transaction>,
 }
 
-#[derive(Clone, Eq, PartialEq, Debug, FromTree, IntoTree)]
+#[derive(Clone, Eq, PartialEq, Debug, FromTree, IntoTree, Encode, Decode)]
 pub struct Block {
     pub unsealed: UnsealedBlock,
     pub proof: H256,
@@ -92,21 +93,21 @@ impl BlockT for Block {
     }
 }
 
-#[derive(Clone, Eq, PartialEq, Debug, FromTree, IntoTree)]
+#[derive(Clone, Eq, PartialEq, Debug, FromTree, IntoTree, Encode, Decode)]
 pub struct Account {
     pub balance: Balance,
     pub nonce: Nonce,
     pub public: Public,
 }
 
-#[derive(Clone, Eq, PartialEq, Debug, FromTree, IntoTree)]
+#[derive(Clone, Eq, PartialEq, Debug, FromTree, IntoTree, Encode, Decode)]
 pub struct UnsealedTransaction {
     pub from: AccountId,
     pub to: TransferId,
     pub amount: Balance,
 }
 
-#[derive(Clone, Eq, PartialEq, Debug, FromTree, IntoTree)]
+#[derive(Clone, Eq, PartialEq, Debug, FromTree, IntoTree, Encode, Decode)]
 pub struct Transaction {
     pub unsealed: UnsealedTransaction,
     pub signature: Signature,
