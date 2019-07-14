@@ -9,7 +9,11 @@ edition = "2018"
 [dependencies]
 primitive-types = "0.4"
 blockchain = "0.8"
-bm-le = "0.6"
-bm = "0.5"
+blockchain-network-simple = "0.4"
+bm-le = { version = "0.6", path = "../bm/le" }
+bm = { version = "0.5", path = "../bm" }
 sha3 = "0.8"
+clap = "2.33"
+schnorrkel = "0.6"
+rand = "0.6"
 parity-codec = { version = "4.1", features = ["derive"] }
