@@ -10,8 +10,8 @@ edition = "2018"
 primitive-types = "0.4"
 blockchain = "0.8"
 blockchain-network-simple = "0.4"
-bm-le = { version = "0.6", path = "../bm/le" }
-bm = { version = "0.5", path = "../bm" }
+bm-le = "0.6"
+bm = "0.5"
 sha3 = "0.8"
 clap = "2.33"
 schnorrkel = "0.6"
