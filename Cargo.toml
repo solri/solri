@@ -17,3 +17,8 @@ clap = "2.33"
 schnorrkel = "0.6"
 rand = "0.6"
 parity-codec = { version = "4.1", features = ["derive"] }
+
+[workspace]
+members = [
+	"engine",
+]
