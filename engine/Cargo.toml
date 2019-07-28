@@ -5,3 +5,4 @@ authors = ["Wei Tang <hi@that.world>"]
 edition = "2018"
 
 [dependencies]
+wasmi = "0.5.0"
