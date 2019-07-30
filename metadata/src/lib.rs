@@ -1,6 +1,8 @@
 #![no_std]
+extern crate alloc;
 
 use core::mem;
+use alloc::vec::Vec;
 
 pub struct RawMetadata {
 	pub timestamp: u64,
@@ -54,5 +56,26 @@ impl RawMetadata {
 			code_ptr: decode_u32(&bytes[32..36])?,
 			code_len: decode_u32(&bytes[36..40])?,
 		})
+	}
+
+	pub fn encode(&self) -> Vec<u8> {
+		fn encode_u64(value: u64) -> Vec<u8> {
+			value.to_le_bytes().to_vec()
+		}
+
+		fn encode_u32(value: u32) -> Vec<u8> {
+			value.to_le_bytes().to_vec()
+		}
+
+		let mut ret = Vec::new();
+		ret.append(&mut encode_u64(self.timestamp));
+		ret.append(&mut encode_u64(self.difficulty));
+		ret.append(&mut encode_u32(self.parent_hash_ptr));
+		ret.append(&mut encode_u32(self.parent_hash_len));
+		ret.append(&mut encode_u32(self.hash_ptr));
+		ret.append(&mut encode_u32(self.hash_len));
+		ret.append(&mut encode_u32(self.code_ptr));
+		ret.append(&mut encode_u32(self.code_len));
+		ret
 	}
 }
