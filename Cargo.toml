@@ -22,4 +22,5 @@ parity-codec = { version = "4.1", features = ["derive"] }
 members = [
 	"engine",
 	"runtime",
+	"metadata",
 ]

@@ -6,3 +6,4 @@ edition = "2018"
 
 [dependencies]
 wasmi = "0.5.0"
+metadata = { package = "solri-metadata", path = "../metadata" }
