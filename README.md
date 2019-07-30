@@ -1,5 +1,7 @@
 # Solri
 
+[![Build Status](https://travis-ci.org/solri/solri.svg?branch=master)](https://travis-ci.org/solri/solri)
+
 An experimental self-evolving blockchain with proof-of-work consensus.
 
 ## Acknowledgement
