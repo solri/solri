@@ -1,4 +1,5 @@
 language: rust
+dist: disco
 rust:
   - stable
 cache: cargo
