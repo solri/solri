@@ -21,4 +21,5 @@ parity-codec = { version = "4.1", features = ["derive"] }
 [workspace]
 members = [
 	"engine",
+	"runtime",
 ]
