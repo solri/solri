@@ -75,8 +75,7 @@
 //!
 //! WASM builder requires the following prerequisities for building the WASM binary:
 //!
-//! - rust nightly + `wasm32-unknown-unknown` toolchain
-//! - wasm-gc
+//! - wasm-strip
 //!
 
 use std::{env, fs, path::PathBuf, process::{Command, Stdio, self}};
@@ -148,19 +147,9 @@ fn create_out_file(file_name: &str, content: String) {
 	).expect("Creating and writing can not fail; qed");
 }
 
-/// Get a cargo command that compiles with nightly
-fn get_nightly_cargo() -> CargoCommand {
-	let default_cargo = CargoCommand::new("cargo");
-	let mut rustup_run_nightly = CargoCommand::new("rustup");
-	rustup_run_nightly.args(&["run", "nightly", "cargo"]);
-
-	if default_cargo.is_nightly() {
-		default_cargo
-	} else if rustup_run_nightly.works() {
-		rustup_run_nightly
-	} else {
-		default_cargo
-	}
+/// Get a cargo command that compiles
+fn get_cargo() -> CargoCommand {
+	CargoCommand::new("cargo")
 }
 
 /// Builder for cargo commands
@@ -199,16 +188,5 @@ impl CargoCommand {
 			.stderr(Stdio::null())
 			.status()
 			.map(|s| s.success()).unwrap_or(false)
-	}
-
-	/// Check if the supplied cargo command is a nightly version
-	fn is_nightly(&self) -> bool {
-		self.command()
-			.arg("--version")
-			.output()
-			.map_err(|_| ())
-			.and_then(|o| String::from_utf8(o.stdout).map_err(|_| ()))
-			.unwrap_or_default()
-			.contains("-nightly")
 	}
 }
