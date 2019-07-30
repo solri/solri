@@ -4,11 +4,10 @@ rust:
   - stable
 cache: cargo
 before_script:
-  - sudo apt-get install -y wabt
+  - wget https://github.com/WebAssembly/wabt/releases/download/1.0.11/wabt-1.0.11-linux.tar.gz
+  - tar xvf wabt-1.0.11-linux.tar.gz
+  - sudo cp wabt-1.0.11/wasm-strip /usr/bin/wasm-strip
   - rustup target add wasm32-unknown-unknown
-addons:
-  apt:
-    update: true
 script:
   - cargo build --verbose --all
   - cargo test --verbose --all
