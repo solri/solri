@@ -76,7 +76,7 @@ pub fn create_and_compile(cargo_manifest: &Path) -> WasmBinary  {
 	create_wasm_workspace_project(&wasm_workspace);
 
 	build_project(&project);
-	let wasm_binary = compact_wasm_file(&project, cargo_manifest, &wasm_workspace);
+	let wasm_binary = compact_wasm_file(cargo_manifest, &wasm_workspace);
 
 	generate_rerun_if_changed_instructions(cargo_manifest, &project, &wasm_workspace);
 
@@ -283,7 +283,6 @@ fn build_project(project: &Path) {
 
 /// Compact the WASM binary using `wasm-strip`. Returns the path to the bloaty WASM binary.
 fn compact_wasm_file(
-	project: &Path,
 	cargo_manifest: &Path,
 	wasm_workspace: &Path,
 ) -> WasmBinary {

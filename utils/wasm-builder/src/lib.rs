@@ -78,7 +78,7 @@
 //! - wasm-strip
 //!
 
-use std::{env, fs, path::PathBuf, process::{Command, Stdio, self}};
+use std::{env, fs, path::PathBuf, process::{Command, self}};
 
 mod prerequisites;
 mod wasm_project;
@@ -164,29 +164,9 @@ impl CargoCommand {
 		CargoCommand { program: program.into(), args: Vec::new() }
 	}
 
-	fn arg(&mut self, arg: &str) -> &mut Self {
-		self.args.push(arg.into());
-		self
-	}
-
-	fn args(&mut self, args: &[&str]) -> &mut Self {
-		for arg in args {
-			self.arg(arg);
-		}
-		self
-	}
-
 	fn command(&self) -> Command {
 		let mut cmd = Command::new(&self.program);
 		cmd.args(&self.args);
 		cmd
-	}
-
-	fn works(&self) -> bool {
-		self.command()
-			.stdout(Stdio::null())
-			.stderr(Stdio::null())
-			.status()
-			.map(|s| s.success()).unwrap_or(false)
 	}
 }
