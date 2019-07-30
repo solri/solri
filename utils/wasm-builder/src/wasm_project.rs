@@ -251,10 +251,7 @@ fn build_project(project: &Path) {
 	let manifest_path = project.join("Cargo.toml");
 	let mut build_cmd = crate::get_cargo().command();
 
-	let rustflags = format!(
-		"-C link-arg=--export-table {}",
-		env::var(crate::WASM_BUILD_RUSTFLAGS_ENV).unwrap_or_default(),
-	);
+	let rustflags = env::var(crate::WASM_BUILD_RUSTFLAGS_ENV).unwrap_or_default();
 
 	build_cmd.args(&["build", "--target=wasm32-unknown-unknown"])
 		.arg(format!("--manifest-path={}", manifest_path.display()))
