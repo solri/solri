@@ -9,5 +9,3 @@ repository = "https://github.com/paritytech/substrate"
 license = "GPL-3.0"
 
 [dependencies]
-
-[workspace]

@@ -15,5 +15,3 @@ tempfile = "3.1.0"
 toml = "0.5.1"
 walkdir = "2.2.8"
 fs2 = "0.4.3"
-
-[workspace]

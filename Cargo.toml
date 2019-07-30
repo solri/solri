@@ -24,3 +24,7 @@ members = [
 	"runtime",
 	"metadata",
 ]
+exclude = [
+	"utils/wasm-builder",
+	"utils/wasm-builder-runner",
+]
