@@ -9,6 +9,7 @@ build = "build.rs"
 wee_alloc = "0.4.4"
 
 [features]
+default = ["std"]
 std = []
 
 [build-dependencies]

@@ -1,0 +1,9 @@
+[package]
+name = "solri-runtime-cli"
+version = "0.1.0"
+authors = ["Wei Tang <hi@that.world>"]
+edition = "2018"
+
+[dependencies]
+clap = "2.33"
+runtime = { package = "solri-runtime", path = ".." }

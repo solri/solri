@@ -14,15 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with Substrate.  If not, see <http://www.gnu.org/licenses/>.
 
-use wasm_builder_runner::{build_current_project_with_rustflags, WasmBuilderSource};
+use wasm_builder_runner::{build_current_project, WasmBuilderSource};
 
 fn main() {
-	build_current_project_with_rustflags(
+	build_current_project(
 		"wasm_binary.rs",
 		WasmBuilderSource::CratesOrPath {
 			path: "../utils/wasm-builder",
 			version: "1.0.4",
 		},
-		"",
 	);
 }

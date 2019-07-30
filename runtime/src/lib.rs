@@ -10,3 +10,6 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 pub fn panic(_info: &core::panic::PanicInfo) -> ! {
 	unsafe { core::hint::unreachable_unchecked() }
 }
+
+#[cfg(feature = "std")]
+include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
