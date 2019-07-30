@@ -4,7 +4,7 @@
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
-#[cfg(not(feature = "std"))]
+#[cfg(all(not(feature = "std"), target_arch = "wasm32"))]
 #[panic_handler]
 #[no_mangle]
 pub fn panic(_info: &core::panic::PanicInfo) -> ! {
