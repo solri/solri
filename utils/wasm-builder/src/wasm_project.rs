@@ -206,6 +206,12 @@ fn create_project(cargo_manifest: &Path, wasm_workspace: &Path) -> PathBuf {
 				name = "{wasm_binary}"
 				crate-type = ["cdylib"]
 
+				[profile.dev]
+				panic = "abort"
+
+				[profile.release]
+				panic = "abort"
+
 				[dependencies]
 				wasm_project = {{ package = "{crate_name}", path = "{crate_path}", default-features = false }}
 			"#,
