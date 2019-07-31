@@ -1,6 +1,7 @@
 use wasmi::RuntimeValue;
 use metadata::RawMetadata;
 
+#[derive(Debug)]
 pub enum Error {
 	Interpreter(wasmi::Error),
 	InstanceHasStart,
@@ -16,6 +17,7 @@ impl From<wasmi::Error> for Error {
 	}
 }
 
+#[derive(Debug)]
 pub struct Metadata {
 	pub timestamp: u64,
 	pub difficulty: u64,

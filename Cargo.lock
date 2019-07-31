@@ -2062,6 +2062,7 @@ name = "solri-engine"
 version = "0.1.0"
 dependencies = [
  "solri-metadata 0.1.0",
+ "solri-runtime 0.1.0",
  "wasmi 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -2073,6 +2074,7 @@ version = "0.1.0"
 name = "solri-runtime"
 version = "0.1.0"
 dependencies = [
+ "solri-metadata 0.1.0",
  "substrate-wasm-builder-runner 1.0.2",
  "wee_alloc 0.4.4 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
