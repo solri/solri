@@ -4,13 +4,11 @@ use alloc::{vec, vec::Vec};
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 #[panic_handler]
-#[no_mangle]
 unsafe fn panic(_info: &core::panic::PanicInfo) -> ! {
 	unsafe { core::intrinsics::abort() }
 }
 
 #[alloc_error_handler]
-#[no_mangle]
 unsafe fn oom(_: core::alloc::Layout) -> ! {
 	unsafe { core::intrinsics::abort() }
 }
