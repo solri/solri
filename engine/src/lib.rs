@@ -1,5 +1,6 @@
 use wasmi::RuntimeValue;
 use metadata::RawMetadata;
+use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct Metadata {
@@ -27,13 +28,14 @@ impl From<wasmi::Error> for Error {
 }
 
 pub struct Instance {
+	code: Arc<Vec<u8>>,
 	instance: wasmi::ModuleRef,
 	memory: wasmi::MemoryRef,
 }
 
 impl Instance {
-	pub fn new(code: &[u8]) -> Result<Self, Error> {
-		let module = wasmi::Module::from_buffer(code)?;
+	pub fn new(code: Arc<Vec<u8>>) -> Result<Self, Error> {
+		let module = wasmi::Module::from_buffer(code.as_ref())?;
 		let instance = wasmi::ModuleInstance::new(
 			&module,
 			&wasmi::ImportsBuilder::default()
@@ -47,12 +49,12 @@ impl Instance {
 			.as_memory()
 			.ok_or_else(|| Error::InstanceMemoryNotExported)?
 			.clone();
-		Ok(Self { instance, memory })
+		Ok(Self { instance, memory, code })
 	}
 
-	pub fn execute(&self, block: &[u8], code: &[u8]) -> Result<Metadata, Error> {
+	pub fn execute(&self, block: &[u8]) -> Result<Metadata, Error> {
 		self.call_write_block(block)?;
-		self.call_write_code(code)?;
+		self.call_write_code(self.code.as_ref())?;
 		self.call_execute()?;
 		let metadata = self.call_read_metadata()?;
 		self.call_free()?;
