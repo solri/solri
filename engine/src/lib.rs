@@ -1,6 +1,7 @@
 use wasmi::RuntimeValue;
 use metadata::RawMetadata;
 use std::sync::Arc;
+use std::collections::HashMap;
 
 #[derive(Debug)]
 pub struct Metadata {
@@ -150,5 +151,18 @@ impl Instance {
 			None => Ok(()),
 			_ => Err(Error::InvalidFunctionSignature),
 		}
+	}
+}
+
+#[derive(Default)]
+pub struct Cache {
+	cache: HashMap<Vec<u8>, Instance>,
+}
+
+impl Cache {
+	pub fn execute(&mut self, block: &[u8], code: &[u8]) -> Result<Metadata, Error> {
+		let code = code.to_vec();
+		self.cache.entry(code.clone()).or_insert(Instance::new(Arc::new(code))?)
+			.execute(block)
 	}
 }
