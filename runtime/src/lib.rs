@@ -17,20 +17,18 @@ pub enum Error {
 }
 
 #[derive(Debug)]
-pub struct Metadata<'a> {
+pub struct Metadata {
 	pub timestamp: u64,
 	pub difficulty: u64,
 	pub parent_hash: Vec<u8>,
 	pub hash: Vec<u8>,
-	pub code: &'a mut Vec<u8>,
 }
 
-pub fn execute<'a>(_block: &[u8], code: &'a mut Vec<u8>) -> Result<Metadata<'a>, Error> {
+pub fn execute(_block: &[u8], _code: &mut Vec<u8>) -> Result<Metadata, Error> {
 	Ok(Metadata {
 		timestamp: 1,
 		difficulty: 2,
 		parent_hash: vec![5, 6, 7, 8],
 		hash: vec![1, 2, 3, 4],
-		code: code,
 	})
 }
