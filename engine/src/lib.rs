@@ -2,6 +2,15 @@ use wasmi::RuntimeValue;
 use metadata::RawMetadata;
 
 #[derive(Debug)]
+pub struct Metadata {
+	pub timestamp: u64,
+	pub difficulty: u64,
+	pub parent_hash: Vec<u8>,
+	pub hash: Vec<u8>,
+	pub code: Vec<u8>,
+}
+
+#[derive(Debug)]
 pub enum Error {
 	Interpreter(wasmi::Error),
 	InstanceHasStart,
@@ -15,15 +24,6 @@ impl From<wasmi::Error> for Error {
 	fn from(err: wasmi::Error) -> Error {
 		Error::Interpreter(err)
 	}
-}
-
-#[derive(Debug)]
-pub struct Metadata {
-	pub timestamp: u64,
-	pub difficulty: u64,
-	pub parent_hash: Vec<u8>,
-	pub hash: Vec<u8>,
-	pub code: Vec<u8>,
 }
 
 pub struct Instance {

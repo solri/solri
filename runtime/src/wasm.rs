@@ -47,37 +47,45 @@ static mut HASH_ARG: Option<Vec<u8>> = None;
 
 #[no_mangle]
 unsafe extern fn execute() -> u32 {
-	let hash = vec![1, 2, 3, 4];
-	unsafe { HASH_ARG = Some(hash); }
-	let parent_hash = vec![5, 6, 7, 8];
-	unsafe { PARENT_HASH_ARG = Some(parent_hash); }
+	match crate::execute(
+		BLOCK_ARG.as_ref().unwrap(),
+		CODE_ARG.as_mut().unwrap()
+	) {
+		Ok(metadata) => {
+			let hash = metadata.hash;
+			unsafe { HASH_ARG = Some(hash); }
+			let parent_hash = metadata.parent_hash;
+			unsafe { PARENT_HASH_ARG = Some(parent_hash); }
 
-	let (parent_hash_ptr, parent_hash_len) = unsafe {
-		let len = PARENT_HASH_ARG.as_ref().unwrap().len();
-		let ptr = PARENT_HASH_ARG.as_ref().unwrap().as_ptr();
-		(ptr as u32, len as u32)
-	};
-	let (hash_ptr, hash_len) = unsafe {
-		let len = HASH_ARG.as_ref().unwrap().len();
-		let ptr = HASH_ARG.as_ref().unwrap().as_ptr();
-		(ptr as u32, len as u32)
-	};
-	let (code_ptr, code_len) = unsafe {
-		let len = CODE_ARG.as_ref().unwrap().len();
-		let ptr = CODE_ARG.as_ref().unwrap().as_ptr();
-		(ptr as u32, len as u32)
-	};
+			let (parent_hash_ptr, parent_hash_len) = unsafe {
+				let len = PARENT_HASH_ARG.as_ref().unwrap().len();
+				let ptr = PARENT_HASH_ARG.as_ref().unwrap().as_ptr();
+				(ptr as u32, len as u32)
+			};
+			let (hash_ptr, hash_len) = unsafe {
+				let len = HASH_ARG.as_ref().unwrap().len();
+				let ptr = HASH_ARG.as_ref().unwrap().as_ptr();
+				(ptr as u32, len as u32)
+			};
+			let (code_ptr, code_len) = unsafe {
+				let len = CODE_ARG.as_ref().unwrap().len();
+				let ptr = CODE_ARG.as_ref().unwrap().as_ptr();
+				(ptr as u32, len as u32)
+			};
 
-	let metadata = metadata::RawMetadata {
-		timestamp: 1,
-		difficulty: 2,
-		parent_hash_ptr, parent_hash_len,
-		hash_ptr, hash_len,
-		code_ptr, code_len,
-	};
-	unsafe { METADATA_ARG = Some(metadata.encode()); }
+			let metadata = metadata::RawMetadata {
+				timestamp: metadata.timestamp,
+				difficulty: metadata.difficulty,
+				parent_hash_ptr, parent_hash_len,
+				hash_ptr, hash_len,
+				code_ptr, code_len,
+			};
+			unsafe { METADATA_ARG = Some(metadata.encode()); }
 
-	0
+			0
+		},
+		Err(_) => 1,
+	}
 }
 
 #[no_mangle]
