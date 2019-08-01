@@ -10,3 +10,5 @@ metadata = { package = "solri-metadata", path = "../metadata" }
 
 [dev-dependencies]
 solri-runtime = { path = "../runtime" }
+parity-codec = { version = "4.0", features = ["derive"] }
+blockchain = "0.9"

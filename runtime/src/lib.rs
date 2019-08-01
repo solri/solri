@@ -40,7 +40,7 @@ pub struct Metadata {
 	pub hash: Vec<u8>,
 }
 
-const DIFFICULTY: usize = 2;
+const DIFFICULTY: usize = 1;
 
 fn is_all_zero(arr: &[u8]) -> bool {
 	arr.iter().all(|i| *i == 0)
@@ -48,19 +48,37 @@ fn is_all_zero(arr: &[u8]) -> bool {
 
 #[derive(Clone, Debug)]
 pub struct UnsealedBlock {
-	parent_hash: Option<H256>,
-	timestamp: u64,
-	previous_counter: u128,
-	extrinsics: Vec<Extrinsic>,
+	pub parent_hash: Option<H256>,
+	pub timestamp: u64,
+	pub previous_counter: u128,
+	pub extrinsics: Vec<Extrinsic>,
+}
+
+impl UnsealedBlock {
+	pub fn seal(self) -> Block {
+		let mut block = Block {
+			parent_hash: self.parent_hash,
+			extrinsics: self.extrinsics,
+			timestamp: self.timestamp,
+			previous_counter: self.previous_counter,
+			nonce: 0,
+		};
+
+		while !is_all_zero(&block.id()[0..DIFFICULTY]) {
+			block.nonce += 1;
+		}
+
+		block
+	}
 }
 
 #[derive(Clone, Debug, Encode, Decode)]
 pub struct Block {
-	parent_hash: Option<H256>,
-	timestamp: u64,
-	previous_counter: u128,
-	extrinsics: Vec<Extrinsic>,
-	nonce: u64,
+	pub parent_hash: Option<H256>,
+	pub timestamp: u64,
+	pub previous_counter: u128,
+	pub extrinsics: Vec<Extrinsic>,
+	pub nonce: u64,
 }
 
 impl Block {
