@@ -8,10 +8,14 @@ build = "build.rs"
 [dependencies]
 wee_alloc = "0.4.4"
 metadata = { package = "solri-metadata", path = "../metadata" }
+primitive-types = { version = "0.4", default-features = false, features = ["codec"] }
+parity-codec = { version = "4.0", default-features = false, features = ["derive"] }
+blockchain-core = { version = "0.1", default-features = false }
+sha3 = { version = "0.8", default-features = false }
 
 [features]
 default = ["std"]
-std = []
+std = ["primitive-types/std", "parity-codec/std", "blockchain-core/std", "sha3/std"]
 
 [build-dependencies]
 wasm-builder-runner = { package = "substrate-wasm-builder-runner", version = "1.0.2", path = "../utils/wasm-builder-runner" }
