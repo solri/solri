@@ -1,23 +1,23 @@
-use alloc::{vec, vec::Vec};
+use alloc::vec::Vec;
 
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 #[panic_handler]
 unsafe fn panic(_info: &core::panic::PanicInfo) -> ! {
-	unsafe { core::intrinsics::abort() }
+	core::intrinsics::abort()
 }
 
 #[alloc_error_handler]
 unsafe fn oom(_: core::alloc::Layout) -> ! {
-	unsafe { core::intrinsics::abort() }
+	core::intrinsics::abort()
 }
 
 static mut BLOCK_ARG: Option<Vec<u8>> = None;
 
 #[no_mangle]
 unsafe extern fn write_block(len: u32) -> u32 {
-	let ptr = unsafe {
+	let ptr = {
 		BLOCK_ARG = None;
 		let mut arg = Vec::with_capacity(len as usize);
 		arg.resize(len as usize, 0u8);
@@ -31,7 +31,7 @@ static mut CODE_ARG: Option<Vec<u8>> = None;
 
 #[no_mangle]
 unsafe extern fn write_code(len: u32) -> u32 {
-	let ptr = unsafe {
+	let ptr = {
 		CODE_ARG = None;
 		let mut arg = Vec::with_capacity(len as usize);
 		arg.resize(len as usize, 0u8);
@@ -53,21 +53,21 @@ unsafe extern fn execute() -> u32 {
 	) {
 		Ok(metadata) => {
 			let hash = metadata.hash;
-			unsafe { HASH_ARG = Some(hash); }
+			HASH_ARG = Some(hash);
 			let parent_hash = metadata.parent_hash;
-			unsafe { PARENT_HASH_ARG = Some(parent_hash); }
+			PARENT_HASH_ARG = Some(parent_hash);
 
-			let (parent_hash_ptr, parent_hash_len) = unsafe {
+			let (parent_hash_ptr, parent_hash_len) = {
 				let len = PARENT_HASH_ARG.as_ref().unwrap().len();
 				let ptr = PARENT_HASH_ARG.as_ref().unwrap().as_ptr();
 				(ptr as u32, len as u32)
 			};
-			let (hash_ptr, hash_len) = unsafe {
+			let (hash_ptr, hash_len) = {
 				let len = HASH_ARG.as_ref().unwrap().len();
 				let ptr = HASH_ARG.as_ref().unwrap().as_ptr();
 				(ptr as u32, len as u32)
 			};
-			let (code_ptr, code_len) = unsafe {
+			let (code_ptr, code_len) = {
 				let len = CODE_ARG.as_ref().unwrap().len();
 				let ptr = CODE_ARG.as_ref().unwrap().as_ptr();
 				(ptr as u32, len as u32)
@@ -80,7 +80,7 @@ unsafe extern fn execute() -> u32 {
 				hash_ptr, hash_len,
 				code_ptr, code_len,
 			};
-			unsafe { METADATA_ARG = Some(metadata.encode()); }
+			METADATA_ARG = Some(metadata.encode());
 
 			0
 		},
@@ -90,16 +90,14 @@ unsafe extern fn execute() -> u32 {
 
 #[no_mangle]
 unsafe extern fn read_metadata() -> u32 {
-	unsafe { METADATA_ARG.as_ref().unwrap().as_ptr() as u32 }
+	METADATA_ARG.as_ref().unwrap().as_ptr() as u32
 }
 
 #[no_mangle]
 unsafe extern fn free() {
-	unsafe {
-		BLOCK_ARG = None;
-		CODE_ARG = None;
-		HASH_ARG = None;
-		PARENT_HASH_ARG = None;
-		METADATA_ARG = None;
-	}
+	BLOCK_ARG = None;
+	CODE_ARG = None;
+	HASH_ARG = None;
+	PARENT_HASH_ARG = None;
+	METADATA_ARG = None;
 }

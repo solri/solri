@@ -40,27 +40,53 @@ pub struct Metadata {
 	pub hash: Vec<u8>,
 }
 
-const DIFFICULTY: usize = 1;
+const DIFFICULTY: usize = 0;
 
 fn is_all_zero(arr: &[u8]) -> bool {
-	arr.iter().all(|i| *i == 0)
+	arr.len() == 0 ||
+		arr.iter().all(|i| *i == 0)
+}
+
+#[derive(Clone, Debug, Encode, Decode)]
+pub struct Header {
+	pub parent: Option<H256>,
+	pub timestamp: u64,
+	pub state: u128,
+	pub extrinsics: H256,
+}
+
+impl Header {
+	pub fn hash(&self) -> H256 {
+		H256::from_slice(Sha3_256::digest(&self.encode()).as_slice())
+	}
+}
+
+impl From<Block> for Header {
+	fn from(block: Block) -> Header {
+		Header {
+			parent: block.parent.map(|p| p.hash()),
+			timestamp: block.timestamp,
+			state: block.state,
+			extrinsics: H256::from_slice(Sha3_256::digest(&block.extrinsics.encode()).as_slice()),
+		}
+	}
 }
 
 #[derive(Clone, Debug)]
 pub struct UnsealedBlock {
-	pub parent_hash: Option<H256>,
+	pub parent: Option<Header>,
 	pub timestamp: u64,
-	pub previous_counter: u128,
+	pub state: u128,
 	pub extrinsics: Vec<Extrinsic>,
 }
 
 impl UnsealedBlock {
 	pub fn seal(self) -> Block {
 		let mut block = Block {
-			parent_hash: self.parent_hash,
-			extrinsics: self.extrinsics,
+			parent: self.parent,
 			timestamp: self.timestamp,
-			previous_counter: self.previous_counter,
+			state: self.state,
+			extrinsics: self.extrinsics,
 			nonce: 0,
 		};
 
@@ -74,9 +100,9 @@ impl UnsealedBlock {
 
 #[derive(Clone, Debug, Encode, Decode)]
 pub struct Block {
-	pub parent_hash: Option<H256>,
+	pub parent: Option<Header>,
 	pub timestamp: u64,
-	pub previous_counter: u128,
+	pub state: u128,
 	pub extrinsics: Vec<Extrinsic>,
 	pub nonce: u64,
 }
@@ -84,9 +110,9 @@ pub struct Block {
 impl Block {
 	pub fn genesis() -> Self {
 		Block {
-			parent_hash: None,
+			parent: None,
 			timestamp: 0,
-			previous_counter: 0,
+			state: 0,
 			extrinsics: Vec::new(),
 			nonce: 0,
 		}
@@ -97,11 +123,11 @@ impl BlockT for Block {
 	type Identifier = H256;
 
 	fn parent_id(&self) -> Option<H256> {
-		self.parent_hash
+		self.parent.as_ref().map(|p| p.hash())
 	}
 
 	fn id(&self) -> H256 {
-		H256::from_slice(Sha3_256::digest(&self.encode()).as_slice())
+		Header::from(self.clone()).hash()
 	}
 }
 
@@ -127,11 +153,15 @@ impl BlockExecutor for Executor {
 			return Err(Error::DifficultyTooLow);
 		}
 
-		let mut counter = block.previous_counter;
+		let mut counter = block.parent.as_ref().map(|p| p.state).unwrap_or(0);
 		for extrinsic in &block.extrinsics {
 			match extrinsic {
 				Extrinsic::Add(add) => counter += add,
 			}
+		}
+
+		if counter != block.state {
+			return Err(Error::InvalidBlock)
 		}
 
 		Ok(())
@@ -149,17 +179,12 @@ impl SimpleBuilderExecutor for Executor {
 		_state: &mut Self::Externalities,
 		inherent: u64,
 	) -> Result<Self::BuildBlock, Self::Error> {
-		let mut counter = block.previous_counter;
-		for extrinsic in &block.extrinsics {
-			match extrinsic {
-				Extrinsic::Add(add) => counter += add,
-			}
-		}
+		let parent_state = block.parent.as_ref().map(|p| p.state).unwrap_or(0);
 
 		Ok(UnsealedBlock {
-			previous_counter: counter,
+			state: parent_state,
 			timestamp: inherent,
-			parent_hash: Some(block.id()),
+			parent: Some(block.clone().into()),
 			extrinsics: Vec::new(),
 		})
 	}
@@ -170,6 +195,9 @@ impl SimpleBuilderExecutor for Executor {
 		extrinsic: Self::Extrinsic,
 		_state: &mut Self::Externalities,
 	) -> Result<(), Self::Error> {
+		match extrinsic {
+			Extrinsic::Add(add) => block.state += add,
+		}
 		block.extrinsics.push(extrinsic);
 
 		Ok(())
@@ -193,7 +221,7 @@ pub fn execute(block: &[u8], _code: &mut Vec<u8>) -> Result<Metadata, Error> {
 	Ok(Metadata {
 		timestamp: block.timestamp,
 		difficulty: 1,
-		parent_hash: match block.parent_hash {
+		parent_hash: match block.parent.as_ref().map(|p| p.hash()) {
 			Some(hash) => hash[..].to_vec(),
 			None => vec![],
 		},
