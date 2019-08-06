@@ -13,8 +13,9 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 use alloc::{vec, vec::Vec};
 use parity_codec::{Encode, Decode};
 use blockchain_core::{Block as BlockT, BlockExecutor, SimpleBuilderExecutor, NullExternalities};
-use sha3::{Digest, Sha3_256};
+use sha3::Sha3_256;
 use primitive_types::H256;
+use bm_le::{FromTree, IntoTree, tree_root};
 
 #[derive(Debug)]
 pub enum Error {
@@ -47,17 +48,18 @@ fn is_all_zero(arr: &[u8]) -> bool {
 		arr.iter().all(|i| *i == 0)
 }
 
-#[derive(Clone, Debug, Encode, Decode)]
+#[derive(Clone, Debug, Encode, Decode, FromTree, IntoTree)]
 pub struct Header {
 	pub parent: Option<H256>,
 	pub timestamp: u64,
 	pub state: u128,
 	pub extrinsics: H256,
+	pub nonce: u64,
 }
 
 impl Header {
 	pub fn hash(&self) -> H256 {
-		H256::from_slice(Sha3_256::digest(&self.encode()).as_slice())
+		tree_root::<Sha3_256, _>(self)
 	}
 }
 
@@ -67,7 +69,8 @@ impl From<Block> for Header {
 			parent: block.parent.map(|p| p.hash()),
 			timestamp: block.timestamp,
 			state: block.state,
-			extrinsics: H256::from_slice(Sha3_256::digest(&block.extrinsics.encode()).as_slice()),
+			extrinsics: tree_root::<Sha3_256, _>(&block.extrinsics),
+			nonce: block.nonce,
 		}
 	}
 }
@@ -98,7 +101,7 @@ impl UnsealedBlock {
 	}
 }
 
-#[derive(Clone, Debug, Encode, Decode)]
+#[derive(Clone, Debug, Encode, Decode, FromTree, IntoTree)]
 pub struct Block {
 	pub parent: Option<Header>,
 	pub timestamp: u64,
@@ -131,7 +134,7 @@ impl BlockT for Block {
 	}
 }
 
-#[derive(Clone, Debug, Encode, Decode)]
+#[derive(Clone, Debug, FromTree, IntoTree, Encode, Decode)]
 pub enum Extrinsic {
 	Add(u128),
 }
@@ -227,4 +230,16 @@ pub fn execute(block: &[u8], _code: &mut Vec<u8>) -> Result<Metadata, Error> {
 		},
 		hash: block.id()[..].to_vec(),
 	})
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn header_hash_equal_id() {
+		let block = Block::genesis();
+		assert_eq!(tree_root::<Sha3_256, _>(&block),
+				   tree_root::<Sha3_256, _>(&Header::from(block.clone())));
+	}
 }
