@@ -95,6 +95,9 @@ const WASM_BUILD_TYPE_ENV: &str = "WASM_BUILD_TYPE";
 /// Environment variable to extend the `RUSTFLAGS` variable given to the WASM build.
 const WASM_BUILD_RUSTFLAGS_ENV: &str = "WASM_BUILD_RUSTFLAGS";
 
+/// Environment variable to add extra features to the WASM build.
+const WASM_BUILD_FEATURES_ENV: &str = "WASM_BUILD_FEATURES";
+
 /// Build the currently built project as WASM binary.
 ///
 /// The current project is determined by using the `CARGO_MANIFEST_DIR` environment variable.

@@ -191,6 +191,15 @@ fn create_project(cargo_manifest: &Path, wasm_workspace: &Path) -> PathBuf {
 	let wasm_binary = get_wasm_binary_name(cargo_manifest);
 	let project_folder = wasm_workspace.join(&crate_name);
 
+	let features_str = env::var(crate::WASM_BUILD_FEATURES_ENV).map(|features| {
+		format!(", features = [{}]",
+				features
+				.split(",")
+				.map(|f| format!("\"{}\"", f))
+				.collect::<Vec<_>>()
+				.join(", "))
+	}).unwrap_or_default();
+
 	fs::create_dir_all(project_folder.join("src")).expect("Wasm project dir create can not fail; qed");
 
 	fs::write(
@@ -207,11 +216,12 @@ fn create_project(cargo_manifest: &Path, wasm_workspace: &Path) -> PathBuf {
 				crate-type = ["cdylib"]
 
 				[dependencies]
-				wasm_project = {{ package = "{crate_name}", path = "{crate_path}", default-features = false }}
+				wasm_project = {{ package = "{crate_name}", path = "{crate_path}", default-features = false{features_str} }}
 			"#,
 			crate_name = crate_name,
 			crate_path = crate_path.display(),
 			wasm_binary = wasm_binary,
+			features_str = features_str,
 		)
 	).expect("Project `Cargo.toml` writing can not fail; qed");
 
@@ -333,4 +343,5 @@ fn generate_rerun_if_changed_instructions(
 	println!("cargo:rerun-if-env-changed={}", crate::SKIP_BUILD_ENV);
 	println!("cargo:rerun-if-env-changed={}", crate::WASM_BUILD_TYPE_ENV);
 	println!("cargo:rerun-if-env-changed={}", crate::WASM_BUILD_RUSTFLAGS_ENV);
+	println!("cargo:rerun-if-env-changed={}", crate::WASM_BUILD_FEATURES_ENV);
 }

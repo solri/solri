@@ -94,7 +94,14 @@ unsafe extern fn execute() -> u32 {
 
 			0
 		},
-		Err(_) => 1,
+		Err(e) => {
+			#[cfg(feature = "debug-error")] {
+				let estr = format!("{:?}", e);
+				DEBUG_ERROR_ARG = Some(estr.as_bytes().to_vec());
+			}
+
+			1
+		},
 	}
 }
 
@@ -110,4 +117,30 @@ unsafe extern fn free() {
 	ID_ARG = None;
 	PARENT_ID_ARG = None;
 	METADATA_ARG = None;
+
+	#[cfg(feature = "debug-error")] {
+		DEBUG_LAST_ERROR_ARG = None;
+		DEBUG_LAST_ERROR_METADATA_ARG = None;
+	}
+}
+
+#[cfg(feature = "debug-error")]
+static mut DEBUG_ERROR_ARG: Option<Vec<u8>> = None;
+#[cfg(feature = "debug-error")]
+static mut DEBUG_ERROR_METADATA_ARG: Option<Vec<u8>> = None;
+
+#[cfg(feature = "debug-error")]
+#[no_mangle]
+unsafe extern fn debug_read_error() -> u32 {
+	let error = DEBUG_ERROR_ARG.as_ref().unwrap();
+	let len = error.len();
+	let ptr = error.as_ptr();
+
+	let metadata = RawArray {
+		ptr: ptr as u32,
+		len: len as u32,
+	};
+	DEBUG_ERROR_METADATA_ARG = Some(metadata.encode());
+
+	DEBUG_ERROR_METADATA_ARG.as_ref().unwrap().as_ptr() as u32
 }

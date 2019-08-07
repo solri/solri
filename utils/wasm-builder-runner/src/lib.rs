@@ -33,6 +33,9 @@ const SKIP_BUILD_ENV: &str = "SKIP_WASM_BUILD";
 /// Environment variable to extend the `RUSTFLAGS` variable given to the WASM build.
 const WASM_BUILD_RUSTFLAGS_ENV: &str = "WASM_BUILD_RUSTFLAGS";
 
+/// Environment variable to add extra features to the WASM build.
+const WASM_BUILD_FEATURES_ENV: &str = "WASM_BUILD_FEATURES";
+
 /// Environment variable that tells us to create a dummy WASM binary.
 ///
 /// This is useful for `cargo check` to speed-up the compilation.
@@ -106,6 +109,21 @@ pub fn build_current_project_with_rustflags(
 ) {
 	let given_rustflags = env::var(WASM_BUILD_RUSTFLAGS_ENV).unwrap_or_default();
 	env::set_var(WASM_BUILD_RUSTFLAGS_ENV, format!("{} {}", given_rustflags, rustflags));
+
+	build_current_project(file_name, wasm_builder_source)
+}
+
+/// Build the currently built project as WASM binary and extend features with the given ones.
+///
+/// For more information, see [`build_current_project`].
+pub fn build_current_project_with_features(
+	file_name: &str,
+	wasm_builder_source: WasmBuilderSource,
+	features: &[&str],
+) {
+	if !features.is_empty() {
+		env::set_var(WASM_BUILD_FEATURES_ENV, features.join(","));
+	}
 
 	build_current_project(file_name, wasm_builder_source)
 }

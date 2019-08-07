@@ -15,7 +15,8 @@ sha3 = { version = "0.8", default-features = false }
 bm-le = { version = "0.9", default-features = false, features = ["derive"] }
 
 [features]
-default = ["std"]
+default = ["std", "debug-error"]
+debug-error = []
 std = [
 	"primitive-types/std",
 	"parity-codec/std",

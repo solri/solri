@@ -4,7 +4,7 @@ pub use self::executor::{Executor, CodeExternalities};
 pub use metadata::GenericBlock;
 
 use wasmi::RuntimeValue;
-use metadata::RawMetadata;
+use metadata::{RawMetadata, RawArray};
 use std::sync::Arc;
 use std::collections::HashMap;
 use std::error as stderror;
@@ -26,6 +26,7 @@ pub enum Error {
 	InvalidFunctionSignature,
 	InvalidMetadata,
 	ExecutionFailed,
+	ExecutionFailedWithReason(String),
 	OutdatedRuntime,
 }
 
@@ -156,7 +157,42 @@ impl Instance {
 				if status == 0 {
 					Ok(())
 				} else {
-					Err(Error::ExecutionFailed)
+					if self.instance.export_by_name("debug_read_error").is_some() {
+						match self.instance.invoke_export(
+							"debug_read_error",
+							&[],
+							&mut wasmi::NopExternals,
+						) {
+							Ok(Some(RuntimeValue::I32(ptr))) => {
+								let len = RawArray::bytes_len();
+								let bytes = self.memory.get(ptr as u32, len).map_err(|e| {
+									Error::ExecutionFailedWithReason(
+										format!("read debug error failed ({:?})", e)
+									)
+								})?;
+								let metadata = RawArray::decode(&bytes).ok_or(
+									Error::ExecutionFailedWithReason(
+										"read debug error failed (raw array decode)".to_string()
+									)
+								)?;
+								let earray = self.memory.get(metadata.ptr, metadata.len as usize)
+									.map_err(|e| Error::ExecutionFailedWithReason(
+										format!("read debug error failed ({:?})", e)
+									))?;
+								let estr = String::from_utf8(earray)
+									.map_err(|e| Error::ExecutionFailedWithReason(
+										format!("read debug error failed ({:?})", e)
+									))?;
+
+								Err(Error::ExecutionFailedWithReason(estr))
+							},
+							_ => Err(Error::ExecutionFailedWithReason(
+								"read debug error failed (execution)".to_string()
+							)),
+						}
+					} else {
+						Err(Error::ExecutionFailed)
+					}
 				}
 			},
 			_ => Err(Error::InvalidFunctionSignature),
