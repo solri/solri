@@ -26,6 +26,7 @@ pub enum Error {
 	InvalidFunctionSignature,
 	InvalidMetadata,
 	ExecutionFailed,
+	OutdatedRuntime,
 }
 
 impl std::fmt::Display for Error {
