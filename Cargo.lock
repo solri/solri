@@ -211,15 +211,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "blockchain"
-version = "0.9.0"
+version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "blockchain-core 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "blockchain-core 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "blockchain-core"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
@@ -2111,7 +2111,7 @@ dependencies = [
 name = "solri-engine"
 version = "0.1.0"
 dependencies = [
- "blockchain 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "blockchain 0.9.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "parity-codec 4.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "solri-metadata 0.1.0",
  "solri-runtime 0.1.0",
@@ -2126,7 +2126,7 @@ version = "0.1.0"
 name = "solri-runtime"
 version = "0.1.0"
 dependencies = [
- "blockchain-core 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "blockchain-core 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "bm-le 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "parity-codec 4.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "primitive-types 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2894,8 +2894,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum block-cipher-trait 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)" = "1c924d49bd09e7c06003acda26cd9742e796e34282ec6c1189404dee0c1f4774"
 "checksum block-padding 0.1.4 (registry+https://github.com/rust-lang/crates.io-index)" = "6d4dc3af3ee2e12f3e5d224e5e1e3d73668abbeb69e566d361f7d5563a4fdf09"
 "checksum blockchain 0.8.1 (registry+https://github.com/rust-lang/crates.io-index)" = "beacfb01421b763e29d6fc003cb07f3d7a7a853ee2d1e7d74cbe6c0ac9c896f6"
-"checksum blockchain 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)" = "c1233e9f14b0ea7be668e2991a26eb013ff1bddd85007c0404066cf5fa134b2d"
-"checksum blockchain-core 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "7f2e4c762a0f9dc50dca67110b64559afbeef5237df3b45cf4a0706eeb660e5d"
+"checksum blockchain 0.9.1 (registry+https://github.com/rust-lang/crates.io-index)" = "1b3f2268e7c3491445e5870b065c5b0eff2a5b58ab356b88d8435a44b1a27147"
+"checksum blockchain-core 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)" = "2fea8a1ae8ba79ffb8f8c9e30b9d252fb39e86ef92a2a156f0e964df0d27356c"
 "checksum blockchain-network-simple 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)" = "fd64fb84d011c4aeb01aef31d1b61fd932beb6c80459993b54fce1aed7895f89"
 "checksum bm 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)" = "471173d9db9122f3c614d99fd2981558552412766d3a6ed6432e9ea7c72cba66"
 "checksum bm 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)" = "3d8dc3d5556b1f75f65d71fb481d6b5d87d8442d90febe89b11689b86c262fbc"

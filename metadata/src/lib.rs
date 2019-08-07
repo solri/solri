@@ -7,10 +7,10 @@ use alloc::vec::Vec;
 pub struct RawMetadata {
 	pub timestamp: u64,
 	pub difficulty: u64,
-	pub parent_hash_ptr: u32,
-	pub parent_hash_len: u32,
-	pub hash_ptr: u32,
-	pub hash_len: u32,
+	pub parent_id_ptr: u32,
+	pub parent_id_len: u32,
+	pub id_ptr: u32,
+	pub id_len: u32,
 	pub code_ptr: u32,
 	pub code_len: u32,
 }
@@ -19,10 +19,10 @@ impl RawMetadata {
 	pub fn bytes_len() -> usize {
 		mem::size_of::<u64>() + // timestamp
 			mem::size_of::<u64>() + // difficulty
-			mem::size_of::<u32>() + // parent_hash_ptr
-			mem::size_of::<u32>() + // parent_hash_len
-			mem::size_of::<u32>() + // hash_ptr
-			mem::size_of::<u32>() + // hash_len
+			mem::size_of::<u32>() + // parent_id_ptr
+			mem::size_of::<u32>() + // parent_id_len
+			mem::size_of::<u32>() + // id_ptr
+			mem::size_of::<u32>() + // id_len
 			mem::size_of::<u32>() + // code_ptr
 			mem::size_of::<u32>() // code_len
 	}
@@ -49,10 +49,10 @@ impl RawMetadata {
 		Some(RawMetadata {
 			timestamp: decode_u64(&bytes[0..8])?,
 			difficulty: decode_u64(&bytes[8..16])?,
-			parent_hash_ptr: decode_u32(&bytes[16..20])?,
-			parent_hash_len: decode_u32(&bytes[20..24])?,
-			hash_ptr: decode_u32(&bytes[24..28])?,
-			hash_len: decode_u32(&bytes[28..32])?,
+			parent_id_ptr: decode_u32(&bytes[16..20])?,
+			parent_id_len: decode_u32(&bytes[20..24])?,
+			id_ptr: decode_u32(&bytes[24..28])?,
+			id_len: decode_u32(&bytes[28..32])?,
 			code_ptr: decode_u32(&bytes[32..36])?,
 			code_len: decode_u32(&bytes[36..40])?,
 		})
@@ -70,10 +70,10 @@ impl RawMetadata {
 		let mut ret = Vec::new();
 		ret.append(&mut encode_u64(self.timestamp));
 		ret.append(&mut encode_u64(self.difficulty));
-		ret.append(&mut encode_u32(self.parent_hash_ptr));
-		ret.append(&mut encode_u32(self.parent_hash_len));
-		ret.append(&mut encode_u32(self.hash_ptr));
-		ret.append(&mut encode_u32(self.hash_len));
+		ret.append(&mut encode_u32(self.parent_id_ptr));
+		ret.append(&mut encode_u32(self.parent_id_len));
+		ret.append(&mut encode_u32(self.id_ptr));
+		ret.append(&mut encode_u32(self.id_len));
 		ret.append(&mut encode_u32(self.code_ptr));
 		ret.append(&mut encode_u32(self.code_len));
 		ret

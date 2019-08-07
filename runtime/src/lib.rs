@@ -37,8 +37,8 @@ impl std::error::Error for Error { }
 pub struct Metadata {
 	pub timestamp: u64,
 	pub difficulty: u64,
-	pub parent_hash: Vec<u8>,
-	pub hash: Vec<u8>,
+	pub parent_id: Vec<u8>,
+	pub id: Vec<u8>,
 }
 
 const DIFFICULTY: usize = 0;
@@ -58,7 +58,7 @@ pub struct Header {
 }
 
 impl Header {
-	pub fn hash(&self) -> H256 {
+	pub fn id(&self) -> H256 {
 		tree_root::<Sha3_256, _>(self)
 	}
 }
@@ -66,7 +66,7 @@ impl Header {
 impl From<Block> for Header {
 	fn from(block: Block) -> Header {
 		Header {
-			parent: block.parent.map(|p| p.hash()),
+			parent: block.parent.map(|p| p.id()),
 			timestamp: block.timestamp,
 			state: block.state,
 			extrinsics: tree_root::<Sha3_256, _>(&block.extrinsics),
@@ -126,11 +126,11 @@ impl BlockT for Block {
 	type Identifier = H256;
 
 	fn parent_id(&self) -> Option<H256> {
-		self.parent.as_ref().map(|p| p.hash())
+		self.parent.as_ref().map(|p| p.id())
 	}
 
 	fn id(&self) -> H256 {
-		Header::from(self.clone()).hash()
+		Header::from(self.clone()).id()
 	}
 }
 
@@ -224,11 +224,11 @@ pub fn execute(block: &[u8], _code: &mut Vec<u8>) -> Result<Metadata, Error> {
 	Ok(Metadata {
 		timestamp: block.timestamp,
 		difficulty: 1,
-		parent_hash: match block.parent.as_ref().map(|p| p.hash()) {
-			Some(hash) => hash[..].to_vec(),
+		parent_id: match block.parent.as_ref().map(|p| p.id()) {
+			Some(id) => id[..].to_vec(),
 			None => vec![],
 		},
-		hash: block.id()[..].to_vec(),
+		id: block.id()[..].to_vec(),
 	})
 }
 
@@ -237,7 +237,7 @@ mod tests {
 	use super::*;
 
 	#[test]
-	fn header_hash_equal_id() {
+	fn header_id_equal_id() {
 		let block = Block::genesis();
 		assert_eq!(tree_root::<Sha3_256, _>(&block),
 				   tree_root::<Sha3_256, _>(&Header::from(block.clone())));

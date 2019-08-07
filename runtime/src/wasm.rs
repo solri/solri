@@ -42,8 +42,8 @@ unsafe extern fn write_code(len: u32) -> u32 {
 }
 
 static mut METADATA_ARG: Option<Vec<u8>> = None;
-static mut PARENT_HASH_ARG: Option<Vec<u8>> = None;
-static mut HASH_ARG: Option<Vec<u8>> = None;
+static mut PARENT_ID_ARG: Option<Vec<u8>> = None;
+static mut ID_ARG: Option<Vec<u8>> = None;
 
 #[no_mangle]
 unsafe extern fn execute() -> u32 {
@@ -52,19 +52,19 @@ unsafe extern fn execute() -> u32 {
 		CODE_ARG.as_mut().unwrap()
 	) {
 		Ok(metadata) => {
-			let hash = metadata.hash;
-			HASH_ARG = Some(hash);
-			let parent_hash = metadata.parent_hash;
-			PARENT_HASH_ARG = Some(parent_hash);
+			let id = metadata.id;
+			ID_ARG = Some(id);
+			let parent_id = metadata.parent_id;
+			PARENT_ID_ARG = Some(parent_id);
 
-			let (parent_hash_ptr, parent_hash_len) = {
-				let len = PARENT_HASH_ARG.as_ref().unwrap().len();
-				let ptr = PARENT_HASH_ARG.as_ref().unwrap().as_ptr();
+			let (parent_id_ptr, parent_id_len) = {
+				let len = PARENT_ID_ARG.as_ref().unwrap().len();
+				let ptr = PARENT_ID_ARG.as_ref().unwrap().as_ptr();
 				(ptr as u32, len as u32)
 			};
-			let (hash_ptr, hash_len) = {
-				let len = HASH_ARG.as_ref().unwrap().len();
-				let ptr = HASH_ARG.as_ref().unwrap().as_ptr();
+			let (id_ptr, id_len) = {
+				let len = ID_ARG.as_ref().unwrap().len();
+				let ptr = ID_ARG.as_ref().unwrap().as_ptr();
 				(ptr as u32, len as u32)
 			};
 			let (code_ptr, code_len) = {
@@ -76,8 +76,8 @@ unsafe extern fn execute() -> u32 {
 			let metadata = metadata::RawMetadata {
 				timestamp: metadata.timestamp,
 				difficulty: metadata.difficulty,
-				parent_hash_ptr, parent_hash_len,
-				hash_ptr, hash_len,
+				parent_id_ptr, parent_id_len,
+				id_ptr, id_len,
 				code_ptr, code_len,
 			};
 			METADATA_ARG = Some(metadata.encode());
@@ -97,7 +97,7 @@ unsafe extern fn read_metadata() -> u32 {
 unsafe extern fn free() {
 	BLOCK_ARG = None;
 	CODE_ARG = None;
-	HASH_ARG = None;
-	PARENT_HASH_ARG = None;
+	ID_ARG = None;
+	PARENT_ID_ARG = None;
 	METADATA_ARG = None;
 }

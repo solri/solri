@@ -1,14 +1,19 @@
+mod executor;
+
+pub use self::executor::{Block, Executor, CodeExternalities};
+
 use wasmi::RuntimeValue;
 use metadata::RawMetadata;
 use std::sync::Arc;
 use std::collections::HashMap;
+use std::error as stderror;
 
 #[derive(Debug)]
 pub struct Metadata {
 	pub timestamp: u64,
 	pub difficulty: u64,
-	pub parent_hash: Vec<u8>,
-	pub hash: Vec<u8>,
+	pub parent_id: Vec<u8>,
+	pub id: Vec<u8>,
 	pub code: Vec<u8>,
 }
 
@@ -21,6 +26,14 @@ pub enum Error {
 	InvalidMetadata,
 	ExecutionFailed,
 }
+
+impl std::fmt::Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+		write!(f, "{:?}", self)
+    }
+}
+
+impl stderror::Error for Error { }
 
 impl From<wasmi::Error> for Error {
 	fn from(err: wasmi::Error) -> Error {
@@ -101,13 +114,13 @@ impl Instance {
 				let bytes = self.memory.get(ptr as u32, len)?;
 				let metadata_ptr = RawMetadata::decode(&bytes)
 					.ok_or(Error::InvalidMetadata)?;
-				let parent_hash = self.memory.get(
-					metadata_ptr.parent_hash_ptr,
-					metadata_ptr.parent_hash_len as usize
+				let parent_id = self.memory.get(
+					metadata_ptr.parent_id_ptr,
+					metadata_ptr.parent_id_len as usize
 				)?;
-				let hash = self.memory.get(
-					metadata_ptr.hash_ptr,
-					metadata_ptr.hash_len as usize
+				let id = self.memory.get(
+					metadata_ptr.id_ptr,
+					metadata_ptr.id_len as usize
 				)?;
 				let code = self.memory.get(
 					metadata_ptr.code_ptr,
@@ -116,8 +129,8 @@ impl Instance {
 				Ok(Metadata {
 					timestamp: metadata_ptr.timestamp,
 					difficulty: metadata_ptr.difficulty,
-					parent_hash,
-					hash,
+					parent_id,
+					id,
 					code,
 				})
 			},

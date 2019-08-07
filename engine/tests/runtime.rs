@@ -21,7 +21,7 @@ fn call_runtime() {
 	let metadata = instance.execute(&block.encode()).unwrap();
 	assert_eq!(metadata.timestamp, block.timestamp);
 	assert_eq!(metadata.difficulty, 1);
-	assert_eq!(metadata.parent_hash, block.parent_id().unwrap()[..].to_vec());
-	assert_eq!(metadata.hash, block.id()[..].to_vec());
+	assert_eq!(metadata.parent_id, block.parent_id().unwrap()[..].to_vec());
+	assert_eq!(metadata.id, block.id()[..].to_vec());
 	assert_eq!(metadata.code, runtime::WASM_BINARY.to_vec());
 }
