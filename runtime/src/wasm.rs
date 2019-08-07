@@ -1,4 +1,5 @@
 use alloc::vec::Vec;
+use alloc::format;
 use metadata::{RawMetadata, RawArray};
 
 #[global_allocator]
@@ -119,8 +120,8 @@ unsafe extern fn free() {
 	METADATA_ARG = None;
 
 	#[cfg(feature = "debug-error")] {
-		DEBUG_LAST_ERROR_ARG = None;
-		DEBUG_LAST_ERROR_METADATA_ARG = None;
+		DEBUG_ERROR_ARG = None;
+		DEBUG_ERROR_METADATA_ARG = None;
 	}
 }
 

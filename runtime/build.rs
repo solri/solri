@@ -15,11 +15,12 @@
 // along with Substrate.  If not, see <http://www.gnu.org/licenses/>.
 
 use wasm_builder_runner::{build_current_project_with_features, WasmBuilderSource};
+use std::env;
 
 fn main() {
 	let mut features = Vec::new();
-	if cfg!(features = "debug-error") {
-		features.push("debug_error");
+	if env::var("CARGO_FEATURE_DEBUG_ERROR").is_ok() {
+		features.push("debug-error");
 	}
 
 	build_current_project_with_features(
