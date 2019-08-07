@@ -1,4 +1,5 @@
 use alloc::vec::Vec;
+use metadata::{RawMetadata, RawArray};
 
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
@@ -73,12 +74,21 @@ unsafe extern fn execute() -> u32 {
 				(ptr as u32, len as u32)
 			};
 
-			let metadata = metadata::RawMetadata {
+			let metadata = RawMetadata {
 				timestamp: metadata.timestamp,
 				difficulty: metadata.difficulty,
-				parent_id_ptr, parent_id_len,
-				id_ptr, id_len,
-				code_ptr, code_len,
+				parent_id: RawArray {
+					ptr: parent_id_ptr,
+					len: parent_id_len,
+				},
+				id: RawArray {
+					ptr: id_ptr,
+					len: id_len,
+				},
+				code: RawArray {
+					ptr: code_ptr,
+					len: code_len,
+				},
 			};
 			METADATA_ARG = Some(metadata.encode());
 

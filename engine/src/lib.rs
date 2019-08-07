@@ -123,16 +123,16 @@ impl Instance {
 				let metadata_ptr = RawMetadata::decode(&bytes)
 					.ok_or(Error::InvalidMetadata)?;
 				let parent_id = self.memory.get(
-					metadata_ptr.parent_id_ptr,
-					metadata_ptr.parent_id_len as usize
+					metadata_ptr.parent_id.ptr,
+					metadata_ptr.parent_id.len as usize
 				)?;
 				let id = self.memory.get(
-					metadata_ptr.id_ptr,
-					metadata_ptr.id_len as usize
+					metadata_ptr.id.ptr,
+					metadata_ptr.id.len as usize
 				)?;
 				let code = self.memory.get(
-					metadata_ptr.code_ptr,
-					metadata_ptr.code_len as usize
+					metadata_ptr.code.ptr,
+					metadata_ptr.code.len as usize
 				)?;
 				Ok(Metadata {
 					timestamp: metadata_ptr.timestamp,
