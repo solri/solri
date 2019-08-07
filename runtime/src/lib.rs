@@ -178,16 +178,16 @@ impl SimpleBuilderExecutor for Executor {
 
 	fn initialize_block(
 		&self,
-		block: &Self::Block,
+		parent_block: &Self::Block,
 		_state: &mut Self::Externalities,
 		inherent: u64,
 	) -> Result<Self::BuildBlock, Self::Error> {
-		let parent_state = block.parent.as_ref().map(|p| p.state).unwrap_or(0);
+		let parent_state = parent_block.state;
 
 		Ok(UnsealedBlock {
 			state: parent_state,
 			timestamp: inherent,
-			parent: Some(block.clone().into()),
+			parent: Some(parent_block.clone().into()),
 			extrinsics: Vec::new(),
 		})
 	}

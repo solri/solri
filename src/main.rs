@@ -1,15 +1,12 @@
-use blockchain::backend::{SharedMemoryBackend, ChainQuery, ImportOperation, ImportLock};
+use blockchain::backend::{SharedMemoryBackend, ChainQuery, ImportLock};
 use blockchain::import::ImportAction;
-use blockchain::traits::{Block as BlockT, SimpleBuilderExecutor, AsExternalities};
+use blockchain::{Block as BlockT, SimpleBuilderExecutor, AsExternalities};
 use blockchain_network_simple::{BestDepthImporter, BestDepthStatusProducer};
 use std::thread;
 use std::collections::HashMap;
 use clap::{App, SubCommand, AppSettings, Arg};
-use rand::rngs::OsRng;
-use primitive_types::H256;
-use crate::runtime::{Block, Executor, State, TransferId, UnsealedTransaction};
-
-pub mod runtime;
+use parity_codec::{Encode, Decode};
+use engine::CodeExternalities;
 
 fn main() {
     let matches = App::new("Solri")
@@ -41,12 +38,38 @@ fn main() {
     }
 }
 
+#[derive(Clone, Eq, PartialEq, Debug, Default, Encode, Decode)]
+pub struct State {
+	code: Vec<u8>
+}
+
+impl CodeExternalities for State {
+	fn code(&self) -> &Vec<u8> { &self.code }
+	fn code_mut(&mut self) -> &mut Vec<u8> { &mut self.code }
+}
+
+impl AsExternalities<dyn CodeExternalities> for State {
+    fn as_externalities(&mut self) -> &mut (dyn CodeExternalities + 'static) {
+        self
+    }
+}
+
 fn local_sync() {
-    let genesis_block = Block::genesis();
+    let runtime_genesis_block = runtime::Block::genesis();
+	let genesis_block = engine::Block {
+		id: runtime_genesis_block.id()[..].to_vec(),
+		parent_id: None,
+		difficulty: 1,
+		timestamp: runtime_genesis_block.timestamp,
+		data: runtime_genesis_block.encode(),
+	};
+	let genesis_state = State {
+		code: runtime::WASM_BINARY.to_vec(),
+	};
     let (backend_build, lock_build) = (
 		SharedMemoryBackend::<_, (), State>::new_with_genesis(
 			genesis_block.clone(),
-			Default::default()
+			genesis_state,
 		),
 		ImportLock::new()
     );
@@ -63,7 +86,7 @@ fn local_sync() {
 				ImportLock::new()
 			)
 		};
-		let importer = BestDepthImporter::new(Executor, backend.clone(), lock.clone());
+		let importer = BestDepthImporter::new(engine::Executor, backend.clone(), lock.clone());
 		let status = BestDepthStatusProducer::new(backend.clone());
 		peers.insert(peer_id, (backend, lock, importer, status));
     }
@@ -75,13 +98,23 @@ fn local_sync() {
 }
 
 fn libp2p_sync(port: &str, author: bool) {
-    let genesis_block = Block::genesis();
+    let runtime_genesis_block = runtime::Block::genesis();
+	let genesis_block = engine::Block {
+		id: runtime_genesis_block.id()[..].to_vec(),
+		parent_id: None,
+		difficulty: 1,
+		timestamp: runtime_genesis_block.timestamp,
+		data: runtime_genesis_block.encode(),
+	};
+	let genesis_state = State {
+		code: runtime::WASM_BINARY.to_vec(),
+	};
     let backend = SharedMemoryBackend::<_, (), State>::new_with_genesis(
 		genesis_block.clone(),
-		Default::default()
+		genesis_state,
     );
     let lock = ImportLock::new();
-    let importer = BestDepthImporter::new(Executor, backend.clone(), lock.clone());
+    let importer = BestDepthImporter::new(engine::Executor, backend.clone(), lock.clone());
     let status = BestDepthStatusProducer::new(backend.clone());
     if author {
 		let backend_build = backend.clone();
@@ -93,55 +126,44 @@ fn libp2p_sync(port: &str, author: bool) {
     blockchain_network_simple::libp2p::start_network_simple_sync(port, backend, lock, importer, status);
 }
 
-
-fn builder_thread(backend_build: SharedMemoryBackend<Block, (), State>, lock: ImportLock) {
-    let mut csprng = OsRng::new().unwrap();
-    let keypair = schnorrkel::Keypair::generate(&mut csprng);
-
+fn builder_thread(backend_build: SharedMemoryBackend<engine::Block, (), State>, lock: ImportLock) {
     loop {
 		let head = backend_build.head();
-		let executor = Executor;
-		println!("Building on top of {}", head);
+		let runtime_executor = runtime::Executor;
+		let engine_executor = engine::Executor;
+		println!("Building on top of {:?}", head);
 
 		// Build a block.
-		let parent_block = backend_build.block_at(&head).unwrap();
-		let mut pending_state = backend_build.state_at(&head).unwrap();
+		let parent_block = runtime::Block::decode(
+			&mut &backend_build.block_at(&head).unwrap().data[..]
+		).unwrap();
+		let pending_state = backend_build.state_at(&head).unwrap();
+		assert_eq!(&pending_state.code()[..], runtime::WASM_BINARY);
 
-		let mut unsealed_block = executor.initialize_block(
-			&parent_block, pending_state.as_externalities(), ()
+		let mut unsealed_block = runtime_executor.initialize_block(
+			&parent_block, ().as_externalities(), 1234
 		).unwrap();
 
-        if pending_state.as_ref().len() > 0 {
-            unsealed_block.coinbase = Some(TransferId::Existing(0));
+		runtime_executor.apply_extrinsic(
+            &mut unsealed_block, runtime::Extrinsic::Add(1), ().as_externalities()
+        ).unwrap();
 
-            let transaction = UnsealedTransaction {
-                from: 0,
-                to: if pending_state.as_ref().len() > 1 {
-                    TransferId::Existing(1)
-                } else {
-                    TransferId::New(Default::default())
-                },
-                amount: 1,
-            }.seal(&keypair);
-            executor.apply_extrinsic(
-                &mut unsealed_block, transaction, pending_state.as_externalities()
-            ).unwrap();
-        } else {
-            unsealed_block.coinbase = Some(TransferId::New(H256::from(keypair.public.to_bytes())));
-        }
-
-		executor.finalize_block(
-			&mut unsealed_block, pending_state.as_externalities(),
+		runtime_executor.finalize_block(
+			&mut unsealed_block, ().as_externalities(),
 		).unwrap();
-        println!("new state: {:?}", pending_state);
 
 		let block = unsealed_block.seal();
 
 		// Import the built block.
-		let mut build_importer = ImportAction::new(&executor, &backend_build, lock.lock());
-		let new_block_hash = block.id();
-		let op = ImportOperation { block, state: pending_state };
-		build_importer.import_raw(op);
+		let mut build_importer = ImportAction::new(&engine_executor, &backend_build, lock.lock());
+		let new_block_hash = block.id()[..].to_vec();
+		build_importer.import_block(engine::Block {
+			id: block.id()[..].to_vec(),
+			parent_id: Some(block.parent_id().unwrap()[..].to_vec()),
+			difficulty: 1,
+			timestamp: block.timestamp,
+			data: block.encode(),
+		}).unwrap();
 		build_importer.set_head(new_block_hash);
 		build_importer.commit().unwrap();
     }

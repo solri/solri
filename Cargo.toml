@@ -8,15 +8,17 @@ edition = "2018"
 
 [dependencies]
 primitive-types = "0.4"
-blockchain = "0.8"
-blockchain-network-simple = "0.4"
-bm-le = { version = "0.8", features = ["with-codec", "with-serde"] }
+blockchain = "0.9"
+blockchain-network-simple = "0.5"
+bm-le = { version = "0.9", features = ["with-codec", "with-serde"] }
 bm = "0.8"
 sha3 = "0.8"
 clap = "2.33"
 schnorrkel = "0.6"
 rand = "0.6"
-parity-codec = { version = "4.1", features = ["derive"] }
+parity-codec = { version = "4.0", features = ["derive"] }
+engine = { package = "solri-engine", path = "engine" }
+runtime = { package = "solri-runtime", path = "runtime" }
 
 [workspace]
 members = [
