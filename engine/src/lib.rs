@@ -1,6 +1,7 @@
 mod executor;
 
-pub use self::executor::{Block, Executor, CodeExternalities};
+pub use self::executor::{Executor, CodeExternalities};
+pub use metadata::GenericBlock;
 
 use wasmi::RuntimeValue;
 use metadata::RawMetadata;

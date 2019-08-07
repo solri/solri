@@ -5,3 +5,9 @@ authors = ["Wei Tang <hi@that.world>"]
 edition = "2018"
 
 [dependencies]
+blockchain-core = { version = "0.1", default-features = false }
+parity-codec = { version = "4.0", default-features = false, features = ["derive"], optional = true }
+
+[features]
+default = ["std"]
+std = ["blockchain-core/std", "parity-codec/std"]

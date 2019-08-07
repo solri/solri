@@ -16,6 +16,7 @@ use blockchain_core::{Block as BlockT, BlockExecutor, SimpleBuilderExecutor, Nul
 use sha3::Sha3_256;
 use primitive_types::H256;
 use bm_le::{FromTree, IntoTree, tree_root};
+use metadata::GenericBlock;
 
 #[derive(Debug)]
 pub enum Error {
@@ -131,6 +132,18 @@ impl BlockT for Block {
 
 	fn id(&self) -> H256 {
 		Header::from(self.clone()).id()
+	}
+}
+
+impl Into<GenericBlock> for Block {
+	fn into(self) -> GenericBlock {
+		GenericBlock {
+			id: self.id()[..].to_vec(),
+			parent_id: self.parent_id().map(|p| p[..].to_vec()),
+			difficulty: 1,
+			timestamp: self.timestamp,
+			data: self.encode(),
+		}
 	}
 }
 

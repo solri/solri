@@ -56,13 +56,7 @@ impl AsExternalities<dyn CodeExternalities> for State {
 
 fn local_sync() {
     let runtime_genesis_block = runtime::Block::genesis();
-	let genesis_block = engine::Block {
-		id: runtime_genesis_block.id()[..].to_vec(),
-		parent_id: None,
-		difficulty: 1,
-		timestamp: runtime_genesis_block.timestamp,
-		data: runtime_genesis_block.encode(),
-	};
+	let genesis_block: engine::GenericBlock = runtime_genesis_block.clone().into();
 	let genesis_state = State {
 		code: runtime::WASM_BINARY.to_vec(),
 	};
@@ -99,13 +93,7 @@ fn local_sync() {
 
 fn libp2p_sync(port: &str, author: bool) {
     let runtime_genesis_block = runtime::Block::genesis();
-	let genesis_block = engine::Block {
-		id: runtime_genesis_block.id()[..].to_vec(),
-		parent_id: None,
-		difficulty: 1,
-		timestamp: runtime_genesis_block.timestamp,
-		data: runtime_genesis_block.encode(),
-	};
+	let genesis_block: engine::GenericBlock = runtime_genesis_block.clone().into();
 	let genesis_state = State {
 		code: runtime::WASM_BINARY.to_vec(),
 	};
@@ -126,7 +114,7 @@ fn libp2p_sync(port: &str, author: bool) {
     blockchain_network_simple::libp2p::start_network_simple_sync(port, backend, lock, importer, status);
 }
 
-fn builder_thread(backend_build: SharedMemoryBackend<engine::Block, (), State>, lock: ImportLock) {
+fn builder_thread(backend_build: SharedMemoryBackend<engine::GenericBlock, (), State>, lock: ImportLock) {
     loop {
 		let head = backend_build.head();
 		let runtime_executor = runtime::Executor;
@@ -157,13 +145,7 @@ fn builder_thread(backend_build: SharedMemoryBackend<engine::Block, (), State>, 
 		// Import the built block.
 		let mut build_importer = ImportAction::new(&engine_executor, &backend_build, lock.lock());
 		let new_block_hash = block.id()[..].to_vec();
-		build_importer.import_block(engine::Block {
-			id: block.id()[..].to_vec(),
-			parent_id: Some(block.parent_id().unwrap()[..].to_vec()),
-			difficulty: 1,
-			timestamp: block.timestamp,
-			data: block.encode(),
-		}).unwrap();
+		build_importer.import_block(block.clone().into()).unwrap();
 		build_importer.set_head(new_block_hash);
 		build_importer.commit().unwrap();
     }
