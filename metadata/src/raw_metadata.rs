@@ -1,6 +1,44 @@
 use core::mem;
 use alloc::vec::Vec;
 
+pub struct RawArray {
+	pub ptr: u32,
+	pub len: u32,
+}
+
+impl RawArray {
+	pub fn bytes_len() -> usize {
+		mem::size_of::<u32>() + mem::size_of::<u32>()
+	}
+
+	pub fn decode(bytes: &[u8]) -> Option<Self> {
+		fn decode_u32(bytes: &[u8]) -> Option<u32> {
+			let mut arr = 0u32.to_le_bytes();
+			if arr.len() != bytes.len() {
+				return None
+			}
+			arr.copy_from_slice(bytes);
+			Some(u32::from_le_bytes(arr))
+		}
+
+		Some(RawArray {
+			ptr: decode_u32(&bytes[0..4])?,
+			len: decode_u32(&bytes[4..8])?,
+		})
+	}
+
+	pub fn encode(&self) -> Vec<u8> {
+		fn encode_u32(value: u32) -> Vec<u8> {
+			value.to_le_bytes().to_vec()
+		}
+
+		let mut ret = Vec::new();
+		ret.append(&mut encode_u32(self.ptr));
+		ret.append(&mut encode_u32(self.len));
+		ret
+	}
+}
+
 pub struct RawMetadata {
 	pub timestamp: u64,
 	pub difficulty: u64,
