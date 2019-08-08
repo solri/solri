@@ -12,7 +12,8 @@ primitive-types = { version = "0.4", default-features = false, features = ["code
 parity-codec = { version = "4.0", default-features = false, features = ["derive"] }
 blockchain-core = { version = "0.1", default-features = false }
 sha3 = { version = "0.8", default-features = false }
-bm-le = { version = "0.9", default-features = false, features = ["derive"] }
+bm-le = { version = "0.10", default-features = false, features = ["derive", "parity-codec"] }
+bm = { version = "0.10", default-features = false, features = ["parity-codec"] }
 
 [features]
 default = ["std", "debug-error"]
@@ -22,6 +23,7 @@ std = [
 	"parity-codec/std",
 	"blockchain-core/std",
 	"sha3/std",
+	"bm/std",
 	"bm-le/std",
 	"metadata/std",
 ]

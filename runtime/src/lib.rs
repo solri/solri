@@ -12,16 +12,45 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 use alloc::{vec, vec::Vec};
 use parity_codec::{Encode, Decode};
-use blockchain_core::{Block as BlockT, BlockExecutor, SimpleBuilderExecutor, NullExternalities};
+use blockchain_core::{Block as BlockT, BlockExecutor, SimpleBuilderExecutor, AsExternalities};
 use sha3::Sha3_256;
 use primitive_types::H256;
-use bm_le::{FromTree, IntoTree, tree_root};
+use bm::{CompactValue, ProvingState, Proofs, WriteBackend, InMemoryBackend, ProvingBackend, Tree};
+use bm_le::{FromTree, IntoTree, Value, tree_root};
+use core::marker::PhantomData;
 use metadata::GenericBlock;
+
+pub type Construct = bm_le::DigestConstruct<Sha3_256>;
+
+pub trait TrieExternalities<DB: WriteBackend<Construct=Construct>> {
+	fn db(&self) -> &DB;
+	fn db_mut(&mut self) -> &mut DB;
+}
+
+#[derive(Default)]
+pub struct InMemoryTrie(InMemoryBackend<Construct>);
+
+impl TrieExternalities<InMemoryBackend<Construct>> for InMemoryTrie {
+	fn db(&self) -> &InMemoryBackend<Construct> {
+		&self.0
+	}
+
+	fn db_mut(&mut self) -> &mut InMemoryBackend<Construct> {
+		&mut self.0
+	}
+}
+
+impl AsExternalities<dyn TrieExternalities<InMemoryBackend<Construct>>> for InMemoryTrie {
+    fn as_externalities(&mut self) -> &mut (dyn TrieExternalities<InMemoryBackend<Construct>> + 'static) {
+        self
+    }
+}
 
 #[derive(Debug)]
 pub enum Error {
 	InvalidBlock,
 	DifficultyTooLow,
+	Backend
 }
 
 #[cfg(feature = "std")]
@@ -53,7 +82,7 @@ fn is_all_zero(arr: &[u8]) -> bool {
 pub struct Header {
 	pub parent: Option<H256>,
 	pub timestamp: u64,
-	pub state: u128,
+	pub state: H256,
 	pub extrinsics: H256,
 	pub nonce: u64,
 }
@@ -69,7 +98,7 @@ impl From<Block> for Header {
 		Header {
 			parent: block.parent.map(|p| p.id()),
 			timestamp: block.timestamp,
-			state: block.state,
+			state: tree_root::<Sha3_256, _>(&block.state),
 			extrinsics: tree_root::<Sha3_256, _>(&block.extrinsics),
 			nonce: block.nonce,
 		}
@@ -80,7 +109,8 @@ impl From<Block> for Header {
 pub struct UnsealedBlock {
 	pub parent: Option<Header>,
 	pub timestamp: u64,
-	pub state: u128,
+	pub parent_state: (Value, ProvingState<Value>),
+	pub state: Value,
 	pub extrinsics: Vec<Extrinsic>,
 }
 
@@ -89,6 +119,7 @@ impl UnsealedBlock {
 		let mut block = Block {
 			parent: self.parent,
 			timestamp: self.timestamp,
+			parent_state: Proofs::from(self.parent_state.1).into_compact(self.parent_state.0),
 			state: self.state,
 			extrinsics: self.extrinsics,
 			nonce: 0,
@@ -102,11 +133,12 @@ impl UnsealedBlock {
 	}
 }
 
-#[derive(Clone, Debug, Encode, Decode, FromTree, IntoTree)]
+#[derive(Clone, Debug, Encode, Decode, IntoTree)]
 pub struct Block {
 	pub parent: Option<Header>,
 	pub timestamp: u64,
-	pub state: u128,
+	pub parent_state: CompactValue<Value>,
+	pub state: Value,
 	pub extrinsics: Vec<Extrinsic>,
 	pub nonce: u64,
 }
@@ -116,7 +148,8 @@ impl Block {
 		Block {
 			parent: None,
 			timestamp: 0,
-			state: 0,
+			parent_state: CompactValue::Single(Default::default()),
+			state: Default::default(),
 			extrinsics: Vec::new(),
 			nonce: 0,
 		}
@@ -149,34 +182,46 @@ impl Into<GenericBlock> for Block {
 
 #[derive(Clone, Debug, FromTree, IntoTree, Encode, Decode)]
 pub enum Extrinsic {
-	Add(u128),
+	Add(u64),
 }
 
-#[derive(Clone)]
-pub struct Executor;
+#[derive(Default, Clone)]
+pub struct Executor<DB: WriteBackend<Construct=Construct>>(PhantomData<DB>);
 
-impl BlockExecutor for Executor {
+impl<DB: WriteBackend<Construct=Construct>> BlockExecutor for Executor<DB> {
 	type Error = Error;
 	type Block = Block;
-	type Externalities = dyn NullExternalities + 'static;
+	type Externalities = dyn TrieExternalities<DB> + 'static;
 
 	fn execute_block(
 		&self,
 		block: &Block,
-		_state: &mut Self::Externalities,
+		state: &mut Self::Externalities,
 	) -> Result<(), Error> {
 		if !is_all_zero(&block.id()[0..DIFFICULTY]) {
 			return Err(Error::DifficultyTooLow);
 		}
 
-		let mut counter = block.parent.as_ref().map(|p| p.state).unwrap_or(0);
+		let parent_state_root = Value(tree_root::<Sha3_256, _>(&block.parent_state));
+		let state_root = block.state.clone();
+
+		let mut trie = if parent_state_root == Default::default() {
+			bm::List::create(state.db_mut(), None).map_err(|_| Error::Backend)?
+		} else {
+			bm::List::reconstruct(parent_state_root, state.db_mut(), None)
+				.map_err(|_| Error::Backend)?
+		};
+
 		for extrinsic in &block.extrinsics {
 			match extrinsic {
-				Extrinsic::Add(add) => counter += add,
+				Extrinsic::Add(add) => {
+					trie.push(state.db_mut(), Value(H256::from_low_u64_le(*add)))
+						.map_err(|_| Error::Backend)?;
+				},
 			}
 		}
 
-		if counter != block.state {
+		if trie.root() != state_root {
 			return Err(Error::InvalidBlock)
 		}
 
@@ -184,7 +229,7 @@ impl BlockExecutor for Executor {
 	}
 }
 
-impl SimpleBuilderExecutor for Executor {
+impl<DB: WriteBackend<Construct=Construct>> SimpleBuilderExecutor for Executor<DB> {
 	type BuildBlock = UnsealedBlock;
 	type Extrinsic = Extrinsic;
 	type Inherent = u64;
@@ -192,13 +237,23 @@ impl SimpleBuilderExecutor for Executor {
 	fn initialize_block(
 		&self,
 		parent_block: &Self::Block,
-		_state: &mut Self::Externalities,
+		state: &mut Self::Externalities,
 		inherent: u64,
 	) -> Result<Self::BuildBlock, Self::Error> {
-		let parent_state = parent_block.state;
+		let parent_state_root = parent_block.state.clone();
+
+		let mut proving = ProvingBackend::new(state.db_mut());
+		let trie = if parent_state_root == Default::default() {
+			bm::List::create(&mut proving, None).map_err(|_| Error::Backend)?
+		} else {
+			bm::List::reconstruct(parent_state_root.clone(), &mut proving, None)
+				.map_err(|_| Error::Backend)?
+		};
+		let proving_state = proving.into_state();
 
 		Ok(UnsealedBlock {
-			state: parent_state,
+			state: trie.root(),
+			parent_state: (parent_state_root, proving_state),
 			timestamp: inherent,
 			parent: Some(parent_block.clone().into()),
 			extrinsics: Vec::new(),
@@ -209,12 +264,21 @@ impl SimpleBuilderExecutor for Executor {
 		&self,
 		block: &mut Self::BuildBlock,
 		extrinsic: Self::Extrinsic,
-		_state: &mut Self::Externalities,
+		state: &mut Self::Externalities,
 	) -> Result<(), Self::Error> {
+		let mut proving = ProvingBackend::from_state(block.parent_state.1.clone(), state.db_mut());
+		let mut trie = bm::OwnedList::reconstruct(block.state.clone(), &mut proving, None)
+			.map_err(|_| Error::Backend)?;
+
 		match extrinsic {
-			Extrinsic::Add(add) => block.state += add,
+			Extrinsic::Add(add) => {
+				trie.push(&mut proving, Value(H256::from_low_u64_le(add)))
+					.map_err(|_| Error::Backend)?;
+			},
 		}
 		block.extrinsics.push(extrinsic);
+		block.parent_state.1 = proving.into_state();
+		block.state = trie.root();
 
 		Ok(())
 	}
@@ -230,9 +294,12 @@ impl SimpleBuilderExecutor for Executor {
 
 pub fn execute(block: &[u8], _code: &mut Vec<u8>) -> Result<Metadata, Error> {
 	let block = Block::decode(&mut &block[..]).ok_or(Error::InvalidBlock)?;
-	let executor = Executor;
+	let (proofs, _) = Proofs::from_compact::<Construct>(block.parent_state.clone());
+	let executor = Executor::<InMemoryBackend<Construct>>::default();
+	let mut trie = InMemoryTrie::default();
+	trie.0.populate(proofs.into());
 
-	executor.execute_block(&block, &mut ())?;
+	executor.execute_block(&block, &mut trie)?;
 
 	Ok(Metadata {
 		timestamp: block.timestamp,
