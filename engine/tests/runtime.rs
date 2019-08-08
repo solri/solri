@@ -11,11 +11,12 @@ use std::sync::Arc;
 fn call_runtime() {
 	let instance = engine::Instance::new(Arc::new(runtime::WASM_BINARY.to_vec())).unwrap();
 	let genesis_block = Block::genesis();
-	let executor = Executor;
+	let executor = Executor::<bm::InMemoryBackend<runtime::Construct>>::default();
+	let mut trie = runtime::InMemoryTrie::default();
 
-	let mut build_block = executor.initialize_block(&genesis_block, &mut (), 1234).unwrap();
-	executor.apply_extrinsic(&mut build_block, Extrinsic::Add(5), &mut ()).unwrap();
-	executor.finalize_block(&mut build_block, &mut ()).unwrap();
+	let mut build_block = executor.initialize_block(&genesis_block, &mut trie, 1234).unwrap();
+	executor.apply_extrinsic(&mut build_block, Extrinsic::Add(5), &mut trie).unwrap();
+	executor.finalize_block(&mut build_block, &mut trie).unwrap();
 	let block = build_block.seal();
 
 	let metadata = instance.execute(&block.encode()).unwrap();

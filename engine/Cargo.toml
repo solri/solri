@@ -15,3 +15,4 @@ default = ["parity-codec"]
 
 [dev-dependencies]
 solri-runtime = { path = "../runtime" }
+bm = { version = "0.10", features = ["parity-codec"] }
