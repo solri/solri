@@ -51,7 +51,7 @@ pub enum Error {
 	NativeExecutor(Box<dyn std::error::Error>),
 }
 
-#[derive(Clone, Default)]
+#[derive(Clone)]
 pub struct State {
 	code: Vec<u8>,
 	trie: Option<DynBackend<InMemoryBackend<runtime::Construct>>>,
@@ -135,6 +135,7 @@ impl<Ba: ChainQuery + Store<Block=GenericBlock, State=State, Auxiliary=()>> Bloc
 		} else {
 			self.generic.execute_block(&block, &mut pending_state)
 				.map_err(|e| BestDepthError::Executor(Box::new(e)))?;
+			pending_state.trie = None;
 		}
 
 		importer.import_block(block, pending_state);
@@ -157,7 +158,7 @@ fn local_sync() {
     let (backend_build, lock_build) = (
 		SharedMemoryBackend::<_, (), State>::new_with_genesis(
 			genesis_block.clone(),
-			genesis_state,
+			genesis_state.clone(),
 		),
 		ImportLock::new()
     );
@@ -169,7 +170,7 @@ fn local_sync() {
 			(
 				SharedMemoryBackend::<_, (), State>::new_with_genesis(
 					genesis_block.clone(),
-					Default::default()
+					genesis_state.clone(),
 				),
 				ImportLock::new()
 			)
@@ -212,6 +213,7 @@ fn libp2p_sync(port: &str, author: bool) {
 fn builder_thread(backend_build: SharedMemoryBackend<engine::GenericBlock, (), State>, lock: ImportLock) {
     loop {
 		build_one(&backend_build, &lock).unwrap();
+		std::thread::sleep(std::time::Duration::new(1, 0));
     }
 }
 
