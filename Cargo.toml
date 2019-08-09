@@ -30,4 +30,13 @@ members = [
 exclude = [
 	"utils/wasm-builder",
 	"utils/wasm-builder-runner",
+	"vendor",
 ]
+
+[patch.crates-io]
+bm = { path = "vendor/bm" }
+bm-le = { path = "vendor/bm/le" }
+bm-le-derive = { path = "vendor/bm/le/derive" }
+blockchain = { path = "vendor/blockchain" }
+blockchain-core = { path = "vendor/blockchain/core" }
+blockchain-network-simple = { path = "vendor/blockchain/network/simple" }

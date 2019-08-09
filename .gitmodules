@@ -1,0 +1,6 @@
+[submodule "vendor/blockchain"]
+	path = vendor/blockchain
+	url = https://github.com/rust-blockchain/blockchain
+[submodule "vendor/bm"]
+	path = vendor/bm
+	url = https://github.com/sorpaas/bm
