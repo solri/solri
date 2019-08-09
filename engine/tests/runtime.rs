@@ -3,7 +3,7 @@ extern crate solri_runtime as runtime;
 
 use parity_codec::Encode;
 use runtime::{Block, Executor, Extrinsic};
-use blockchain::{Block as _, SimpleBuilderExecutor};
+use blockchain::{Block as _, ExtrinsicBuilder};
 
 use std::sync::Arc;
 
@@ -11,7 +11,7 @@ use std::sync::Arc;
 fn call_runtime() {
 	let instance = engine::Instance::new(Arc::new(runtime::WASM_BINARY.to_vec())).unwrap();
 	let genesis_block = Block::genesis();
-	let executor = Executor::<bm::InMemoryBackend<runtime::Construct>>::default();
+	let executor = Executor;
 	let mut trie = runtime::InMemoryTrie::default();
 
 	let mut build_block = executor.initialize_block(&genesis_block, &mut trie, 1234).unwrap();

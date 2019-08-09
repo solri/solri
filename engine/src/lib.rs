@@ -38,12 +38,6 @@ impl std::fmt::Display for Error {
 
 impl stderror::Error for Error { }
 
-impl From<Error> for blockchain::import::Error {
-    fn from(error: Error) -> Self {
-		blockchain::import::Error::Executor(Box::new(error))
-    }
-}
-
 impl From<wasmi::Error> for Error {
 	fn from(err: wasmi::Error) -> Error {
 		Error::Interpreter(err)

@@ -12,38 +12,32 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 use alloc::{vec, vec::Vec};
 use parity_codec::{Encode, Decode};
-use blockchain_core::{Block as BlockT, BlockExecutor, SimpleBuilderExecutor, AsExternalities};
+use blockchain_core::{Block as BlockT, BlockExecutor, ExtrinsicBuilder};
 use sha3::Sha3_256;
 use primitive_types::H256;
-use bm::{CompactValue, ProvingState, Proofs, WriteBackend, InMemoryBackend, ProvingBackend, Tree};
+use bm::{CompactValue, ProvingState, Proofs, ReadBackend, WriteBackend, DynBackend,
+		 InMemoryBackend, ProvingBackend, Tree};
 use bm_le::{FromTree, IntoTree, Value, tree_root};
-use core::marker::PhantomData;
 use metadata::GenericBlock;
 
 pub type Construct = bm_le::DigestConstruct<Sha3_256>;
 
-pub trait TrieExternalities<DB: WriteBackend<Construct=Construct>> {
-	fn db(&self) -> &DB;
-	fn db_mut(&mut self) -> &mut DB;
+pub trait TrieExternalities {
+	fn db(&self) -> &dyn ReadBackend<Construct=Construct, Error=()>;
+	fn db_mut(&mut self) -> &mut dyn WriteBackend<Construct=Construct, Error=()>;
 }
 
 #[derive(Default)]
-pub struct InMemoryTrie(InMemoryBackend<Construct>);
+pub struct InMemoryTrie(DynBackend<InMemoryBackend<Construct>>);
 
-impl TrieExternalities<InMemoryBackend<Construct>> for InMemoryTrie {
-	fn db(&self) -> &InMemoryBackend<Construct> {
+impl TrieExternalities for InMemoryTrie {
+	fn db(&self) -> &dyn ReadBackend<Construct=Construct, Error=()> {
 		&self.0
 	}
 
-	fn db_mut(&mut self) -> &mut InMemoryBackend<Construct> {
+	fn db_mut(&mut self) -> &mut dyn WriteBackend<Construct=Construct, Error=()> {
 		&mut self.0
 	}
-}
-
-impl AsExternalities<dyn TrieExternalities<InMemoryBackend<Construct>>> for InMemoryTrie {
-    fn as_externalities(&mut self) -> &mut (dyn TrieExternalities<InMemoryBackend<Construct>> + 'static) {
-        self
-    }
 }
 
 #[derive(Debug)]
@@ -186,12 +180,12 @@ pub enum Extrinsic {
 }
 
 #[derive(Default, Clone)]
-pub struct Executor<DB: WriteBackend<Construct=Construct>>(PhantomData<DB>);
+pub struct Executor;
 
-impl<DB: WriteBackend<Construct=Construct>> BlockExecutor for Executor<DB> {
+impl BlockExecutor for Executor {
 	type Error = Error;
 	type Block = Block;
-	type Externalities = dyn TrieExternalities<DB> + 'static;
+	type Externalities = dyn TrieExternalities + 'static;
 
 	fn execute_block(
 		&self,
@@ -229,7 +223,7 @@ impl<DB: WriteBackend<Construct=Construct>> BlockExecutor for Executor<DB> {
 	}
 }
 
-impl<DB: WriteBackend<Construct=Construct>> SimpleBuilderExecutor for Executor<DB> {
+impl ExtrinsicBuilder for Executor {
 	type BuildBlock = UnsealedBlock;
 	type Extrinsic = Extrinsic;
 	type Inherent = u64;
@@ -295,7 +289,7 @@ impl<DB: WriteBackend<Construct=Construct>> SimpleBuilderExecutor for Executor<D
 pub fn execute(block: &[u8], _code: &mut Vec<u8>) -> Result<Metadata, Error> {
 	let block = Block::decode(&mut &block[..]).ok_or(Error::InvalidBlock)?;
 	let (proofs, _) = Proofs::from_compact::<Construct>(block.parent_state.clone());
-	let executor = Executor::<InMemoryBackend<Construct>>::default();
+	let executor = Executor;
 	let mut trie = InMemoryTrie::default();
 	trie.0.populate(proofs.into());
 

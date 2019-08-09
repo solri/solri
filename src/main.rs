@@ -41,7 +41,7 @@ fn main() {
     }
 }
 
-#[derive(Clone, Eq, PartialEq, Debug, Default, Encode, Decode)]
+#[derive(Clone, Eq, PartialEq, Debug, Default)]
 pub struct State {
 	code: Vec<u8>
 }
@@ -129,7 +129,7 @@ fn build_one<Ba>(backend_build: &Ba, lock: &ImportLock) -> Result<(), blockchain
 	blockchain::import::Error: From<Ba::Error>,
 {
 	let head = backend_build.head();
-	let runtime_executor = runtime::Executor;
+	let runtime_executor = runtime::Executor::<bm::InMemoryBackend<runtime::Construct>>::default();
 	let engine_executor = engine::Executor;
 	println!("Building on top of {:?}", head);
 
