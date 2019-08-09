@@ -12,7 +12,7 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 use alloc::{vec, vec::Vec};
 use parity_codec::{Encode, Decode};
-use blockchain_core::{Block as BlockT, BlockExecutor, ExtrinsicBuilder};
+use blockchain_core::{Block as BlockT, BlockExecutor, AsExternalities, ExtrinsicBuilder};
 use sha3::Sha3_256;
 use primitive_types::H256;
 use bm::{CompactValue, ProvingState, Proofs, ReadBackend, WriteBackend, DynBackend,
@@ -38,6 +38,9 @@ impl TrieExternalities for InMemoryTrie {
 	fn db_mut(&mut self) -> &mut dyn WriteBackend<Construct=Construct, Error=()> {
 		&mut self.0
 	}
+}
+impl AsExternalities<dyn TrieExternalities> for InMemoryTrie {
+	fn as_externalities(&mut self) -> &mut (dyn TrieExternalities + 'static) { self }
 }
 
 #[derive(Debug)]
