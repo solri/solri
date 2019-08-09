@@ -4,7 +4,7 @@ use blockchain::backend::{
 };
 use blockchain::{Block as BlockT, ExtrinsicBuilder, AsExternalities, BlockExecutor};
 use blockchain::import::{BlockImporter, ImportAction};
-use blockchain_network_simple::{BestDepthError, BestDepthStatusProducer};
+use blockchain_network::sync::{BestDepthError, BestDepthStatusProducer};
 use std::thread;
 use std::collections::HashMap;
 use clap::{App, SubCommand, AppSettings, Arg};
@@ -183,7 +183,7 @@ fn local_sync() {
 		builder_thread(backend_build, lock_build);
     });
 
-    blockchain_network_simple::local::start_local_simple_sync(peers);
+    blockchain_network_local::start_local_simple_sync(peers);
 }
 
 fn libp2p_sync(port: &str, author: bool) {
@@ -207,7 +207,7 @@ fn libp2p_sync(port: &str, author: bool) {
 			builder_thread(backend_build, lock_build);
 		});
     }
-    blockchain_network_simple::libp2p::start_network_simple_sync(port, backend, lock, importer, status);
+    blockchain_network_libp2p::start_network_simple_sync(port, backend, lock, importer, status);
 }
 
 fn builder_thread(backend_build: SharedMemoryBackend<engine::GenericBlock, (), State>, lock: ImportLock) {

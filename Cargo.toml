@@ -9,7 +9,9 @@ edition = "2018"
 [dependencies]
 primitive-types = "0.4"
 blockchain = { path = "vendor/blockchain" }
-blockchain-network-simple = { path = "vendor/blockchain/network/simple" }
+blockchain-network = { path = "vendor/blockchain/network" }
+blockchain-network-libp2p = { path = "vendor/blockchain/network/libp2p" }
+blockchain-network-local = { path = "vendor/blockchain/network/local" }
 bm-le = { path = "vendor/bm/le", features = ["with-codec", "with-serde"] }
 bm = { path = "vendor/bm" }
 sha3 = "0.8"
