@@ -62,6 +62,8 @@ impl RocksRevDB {
 				revarr.copy_from_slice(&revraw);
 				return Ok(u64::from_le_bytes(revarr))
 			}
+		} else {
+			return Ok(0)
 		}
 
 		Err(RocksRevDBError::InvalidRevisionData)
