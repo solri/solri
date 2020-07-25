@@ -1,0 +1,28 @@
+[package]
+name = "bm-le"
+version = "0.10.0"
+description = "Little endian 256-bit layer for binary merkle trie with ssz compatibility and extensions"
+authors = ["Wei Tang <hi@that.world>"]
+edition = "2018"
+license = "Apache-2.0"
+
+[dependencies]
+bm = { version = "0.10", path = "..", default-features = false }
+primitive-types = { version = "0.4", default-features = false }
+bm-le-derive = { version = "0.10", path = "derive", optional = true }
+digest = "0.8"
+typenum = "1.10"
+generic-array = "0.12"
+vecarray = { version = "0.1", default-features = false }
+serde = { version = "1.0", optional = true, default-features = false, features = ["derive", "alloc"] }
+parity-codec = { version = "4.0", optional = true, default-features = false, features = ["derive"] }
+
+[features]
+default = ["derive", "std"]
+derive = ["bm-le-derive"]
+with-codec = ["parity-codec", "bm/parity-codec", "primitive-types/codec"]
+with-serde = ["serde", "bm/serde", "vecarray/serde", "primitive-types/serde"]
+std = ["bm/std", "primitive-types/std", "vecarray/std", "parity-codec/std"]
+
+[dev-dependencies]
+sha2 = "0.8"

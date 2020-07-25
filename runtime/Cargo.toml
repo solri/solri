@@ -10,10 +10,10 @@ wee_alloc = "0.4.4"
 metadata = { package = "solri-metadata", path = "../metadata", default-features = false }
 primitive-types = { version = "0.4", default-features = false, features = ["codec", "byteorder"] }
 parity-codec = { version = "4.0", default-features = false, features = ["derive"] }
-blockchain-core = { path = "../vendor/blockchain/core", default-features = false }
+blockchain-core = { path = "../blockchain/core", default-features = false }
 sha3 = { version = "0.8", default-features = false }
-bm-le = { path = "../vendor/bm/le", default-features = false, features = ["derive", "parity-codec"] }
-bm = { path = "../vendor/bm", default-features = false, features = ["parity-codec"] }
+bm-le = { path = "../bm/le", default-features = false, features = ["derive", "parity-codec"] }
+bm = { path = "../bm", default-features = false, features = ["parity-codec"] }
 
 [features]
 default = ["std", "debug-error"]

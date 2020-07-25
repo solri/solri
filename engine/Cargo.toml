@@ -7,7 +7,7 @@ edition = "2018"
 [dependencies]
 wasmi = "0.5.0"
 metadata = { package = "solri-metadata", path = "../metadata" }
-blockchain = { path = "../vendor/blockchain" }
+blockchain = { path = "../blockchain" }
 parity-codec = { version = "4.0", features = ["derive"], optional = true }
 
 [features]
@@ -15,4 +15,4 @@ default = ["parity-codec"]
 
 [dev-dependencies]
 solri-runtime = { path = "../runtime" }
-bm = { path = "../vendor/bm", features = ["parity-codec"] }
+bm = { path = "../bm", features = ["parity-codec"] }
