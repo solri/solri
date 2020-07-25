@@ -14,6 +14,16 @@ pub struct MemoryRevDB<K, V> {
 	revision: Revision,
 }
 
+impl<K: Ord, V> MemoryRevDB<K, V> {
+	pub fn new() -> Self {
+		Self {
+			db: Default::default(),
+			journal: Default::default(),
+			revision: 0,
+		}
+	}
+}
+
 impl<K: Ord + Clone, V: Clone> RevDB for MemoryRevDB<K, V> {
 	type Key = K;
 	type Value = Option<V>;
