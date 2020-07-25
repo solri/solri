@@ -28,6 +28,6 @@ pub trait RevDB {
     /// returns the new revision number.
     fn commit(
         &mut self,
-        values: impl Iterator<Item=(Self::Key, Self::Value)>
+        values: impl IntoIterator<Item=(Self::Key, Self::Value)>
     ) -> Result<Revision, Self::Error>;
 }

@@ -167,7 +167,7 @@ impl RevDB for RocksRevDB {
 
     fn commit(
         &mut self,
-        values: impl Iterator<Item=(Self::Key, Self::Value)>
+        values: impl IntoIterator<Item=(Self::Key, Self::Value)>
     ) -> Result<Revision, Self::Error> {
 		let new = self.revision + 1;
 
