@@ -28,6 +28,7 @@ members = [
 	"runtime",
 	"runtime/cli",
 	"metadata",
+	"revdb",
 ]
 exclude = [
 	"utils/wasm-builder",

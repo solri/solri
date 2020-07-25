@@ -1,0 +1,9 @@
+[package]
+name = "revdb"
+version = "0.1.0"
+authors = ["Wei Tang <wei@that.world>"]
+description = "Revision database."
+edition = "2018"
+license = "Apache-2.0"
+
+[dependencies]
