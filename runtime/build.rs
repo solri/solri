@@ -14,21 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Substrate.  If not, see <http://www.gnu.org/licenses/>.
 
-use wasm_builder_runner::{build_current_project_with_features, WasmBuilderSource};
-use std::env;
+use wasm_builder_runner::WasmBuilder;
 
 fn main() {
-	let mut features = Vec::new();
-	if env::var("CARGO_FEATURE_DEBUG_ERROR").is_ok() {
-		features.push("debug-error");
-	}
-
-	build_current_project_with_features(
-		"wasm_binary.rs",
-		WasmBuilderSource::CratesOrPath {
-			path: "../utils/wasm-builder",
-			version: "1.0.4",
-		},
-		&features,
-	);
+	WasmBuilder::new()
+		.with_current_project()
+		.with_wasm_builder_from_crates("1.0.9")
+		.build()
 }

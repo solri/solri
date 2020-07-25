@@ -1,20 +1,21 @@
-// Copyright 2019 Parity Technologies (UK) Ltd.
 // This file is part of Substrate.
 
-// Substrate is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
+// Copyright (C) 2019-2020 Parity Technologies (UK) Ltd.
+// SPDX-License-Identifier: Apache-2.0
 
-// Substrate is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// 	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
-// You should have received a copy of the GNU General Public License
-// along with Substrate.  If not, see <http://www.gnu.org/licenses/>.
-
-use std::{process::{Command, Stdio}, fs};
+use std::fs;
 
 use tempfile::tempdir;
 
@@ -23,32 +24,18 @@ use tempfile::tempdir;
 /// # Returns
 /// Returns `None` if everything was found and `Some(ERR_MSG)` if something could not be found.
 pub fn check() -> Option<&'static str> {
-	if !check_nightly_installed() {
+	if !check_nightly_installed(){
 		return Some("Rust nightly not installed, please install it!")
 	}
 
-	if Command::new("wasm-strip")
-		.stdout(Stdio::null())
-		.stderr(Stdio::null())
-		.status()
-		.map(|s| s.code() != Some(1)).unwrap_or(true)
-	{
-		return Some("`wasm-strip` not installed, please install it!")
-	}
-
-	if !check_wasm_toolchain_installed() {
-		return Some("Rust WASM toolchain not installed, please install it!")
-	}
-
-	None
+	check_wasm_toolchain_installed()
 }
 
 fn check_nightly_installed() -> bool {
-	let command = crate::get_nightly_cargo();
-	command.is_nightly()
+	crate::get_nightly_cargo().is_nightly()
 }
 
-fn check_wasm_toolchain_installed() -> bool {
+fn check_wasm_toolchain_installed() -> Option<&'static str> {
 	let temp = tempdir().expect("Creating temp dir does not fail; qed");
 	fs::create_dir_all(temp.path().join("src")).expect("Creating src dir does not fail; qed");
 
@@ -72,13 +59,24 @@ fn check_wasm_toolchain_installed() -> bool {
 	fs::write(&test_file, "pub fn test() {}")
 		.expect("Writing to the test file does not fail; qed");
 
+	let err_msg = "Rust WASM toolchain not installed, please install it!";
 	let manifest_path = manifest_path.display().to_string();
 	crate::get_nightly_cargo()
 		.command()
 		.args(&["build", "--target=wasm32-unknown-unknown", "--manifest-path", &manifest_path])
-		.stdout(Stdio::null())
-		.stderr(Stdio::null())
-		.status()
-		.map(|s| s.success())
-		.unwrap_or(false)
+		.output()
+		.map_err(|_| err_msg)
+		.and_then(|s|
+			if s.status.success() {
+				Ok(())
+			} else {
+				match String::from_utf8(s.stderr) {
+					Ok(ref err) if err.contains("linker `rust-lld` not found") => {
+						Err("`rust-lld` not found, please install it!")
+					},
+					_ => Err(err_msg)
+				}
+			}
+		)
+		.err()
 }
