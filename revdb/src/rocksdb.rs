@@ -1,10 +1,11 @@
-use rocksdb::{DB, ColumnFamily};
+use rocksdb::DB;
 use codec::{Encode, Decode};
 use crate::{RevDB, Revision};
 
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub enum RocksRevDBError {
 	/// Backend error.
-	Backend(rocksdb::Error),
+	Backend(String),
 	/// Invalid revision metadata in database.
 	InvalidRevisionData,
 	/// Invalid journal data.
@@ -13,18 +14,22 @@ pub enum RocksRevDBError {
 	InvalidData,
 	/// Revert target out of range.
 	InvalidRevertTarget,
+	/// Invalid column family name.
+	InvalidColumnFamily,
+	/// Revision not found.
+	NoRevision,
 }
 
 impl From<rocksdb::Error> for RocksRevDBError {
 	fn from(err: rocksdb::Error) -> Self {
-		Self::Backend(err)
+		Self::Backend(err.into_string())
 	}
 }
 
 pub struct RocksRevDB {
 	db: DB,
-	data_cf: ColumnFamily,
-	journal_cf: ColumnFamily,
+	data_cf: String,
+	journal_cf: String,
 	revision: Revision,
 }
 
@@ -38,8 +43,8 @@ fn make_key(revision: Revision, key: &Vec<u8>) -> Vec<u8> {
 impl RocksRevDB {
 	pub fn new(
 		db: DB,
-		data_cf: ColumnFamily,
-		journal_cf: ColumnFamily,
+		data_cf: String,
+		journal_cf: String,
 	) -> Result<Self, RocksRevDBError> {
 		let mut this = Self {
 			db,
@@ -53,7 +58,9 @@ impl RocksRevDB {
 	}
 
 	fn fetch_revision(&self) -> Result<Revision, RocksRevDBError> {
-		let revraw = self.db.get_cf(&self.journal_cf, b"revision")?;
+		let journal_cf = self.db.cf_handle(&self.journal_cf)
+			.ok_or(RocksRevDBError::InvalidColumnFamily)?.clone();
+		let revraw = self.db.get_cf(journal_cf, b"revision")?;
 
 		if let Some(revraw) = revraw {
 			if revraw.len() == 8 {
@@ -70,13 +77,17 @@ impl RocksRevDB {
 
 	fn commit_revision(&self, revision: Revision) -> Result<(), RocksRevDBError> {
 		let revarr = revision.to_le_bytes();
-		self.db.put_cf(&self.journal_cf, b"revision", &revarr)?;
+		let journal_cf = self.db.cf_handle(&self.journal_cf)
+			.ok_or(RocksRevDBError::InvalidColumnFamily)?.clone();
+		self.db.put_cf(journal_cf, b"revision", &revarr)?;
 
 		Ok(())
 	}
 
 	fn fetch_journal(&self, revision: Revision) -> Result<Vec<Vec<u8>>, RocksRevDBError> {
-		let journaldata = self.db.get_cf(&self.journal_cf, &(b"journal", revision).encode()[..])?;
+		let journal_cf = self.db.cf_handle(&self.journal_cf)
+			.ok_or(RocksRevDBError::InvalidColumnFamily)?.clone();
+		let journaldata = self.db.get_cf(journal_cf, &(b"journal", revision).encode()[..])?;
 
 		match journaldata {
 			Some(journaldata) => {
@@ -93,25 +104,33 @@ impl RocksRevDB {
 	}
 
 	fn remove_journal(&self, revision: Revision) -> Result<(), RocksRevDBError> {
-		self.db.delete_cf(&self.journal_cf, &(b"journal", revision).encode()[..])?;
+		let journal_cf = self.db.cf_handle(&self.journal_cf)
+			.ok_or(RocksRevDBError::InvalidColumnFamily)?.clone();
+		self.db.delete_cf(&journal_cf, &(b"journal", revision).encode()[..])?;
 
 		Ok(())
 	}
 
 	fn commit_journal(&self, revision: Revision, keys: Vec<Vec<u8>>) -> Result<(), RocksRevDBError> {
-		self.db.put_cf(&self.journal_cf, &(b"journal", revision).encode()[..], &keys.encode())?;
+		let journal_cf = self.db.cf_handle(&self.journal_cf)
+			.ok_or(RocksRevDBError::InvalidColumnFamily)?.clone();
+		self.db.put_cf(journal_cf, &(b"journal", revision).encode()[..], &keys.encode())?;
 
 		Ok(())
 	}
 
 	fn remove_key(&self, revision: Revision, key: &Vec<u8>) -> Result<(), RocksRevDBError> {
-		self.db.delete_cf(&self.data_cf, make_key(revision, key))?;
+		let data_cf = self.db.cf_handle(&self.data_cf)
+			.ok_or(RocksRevDBError::InvalidColumnFamily)?.clone();
+		self.db.delete_cf(&data_cf, make_key(revision, key))?;
 
 		Ok(())
 	}
 
 	fn fetch_key(&self, revision: Revision, key: &Vec<u8>) -> Result<Option<Vec<u8>>, RocksRevDBError> {
-		let mut iter = self.db.prefix_iterator_cf(&self.data_cf, make_key(revision, key));
+		let data_cf = self.db.cf_handle(&self.data_cf)
+			.ok_or(RocksRevDBError::InvalidColumnFamily)?.clone();
+		let mut iter = self.db.prefix_iterator_cf(data_cf, make_key(revision, key));
 		let value = iter.next();
 
 		match value {
@@ -127,7 +146,9 @@ impl RocksRevDB {
 	}
 
 	fn commit_key(&self, revision: Revision, key: Vec<u8>, value: Option<Vec<u8>>) -> Result<(), RocksRevDBError> {
-		self.db.put_cf(&self.data_cf, make_key(revision, &key), &value.encode())?;
+		let data_cf = self.db.cf_handle(&self.data_cf)
+			.ok_or(RocksRevDBError::InvalidColumnFamily)?.clone();
+		self.db.put_cf(data_cf, make_key(revision, &key), &value.encode())?;
 
 		Ok(())
 	}
@@ -157,10 +178,17 @@ impl RevDB for RocksRevDB {
 			current -= 1;
 		}
 
+		self.commit_revision(target)?;
+		self.revision = target;
+
 		Ok(())
 	}
 
     fn get(&self, target: Revision, key: &Self::Key) -> Result<Self::Value, Self::Error> {
+		if target > self.revision {
+			return Err(RocksRevDBError::NoRevision)
+		}
+
 		self.fetch_key(target, key)
 	}
 
@@ -178,7 +206,46 @@ impl RevDB for RocksRevDB {
 
 		self.commit_journal(new, keys)?;
 		self.commit_revision(new)?;
+		self.revision = new;
 
 		Ok(new)
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn should_handle_commit_revert() {
+		let dbdir = tempfile::tempdir().unwrap();
+		let mut ropts = rocksdb::Options::default();
+		ropts.create_if_missing(true);
+		ropts.create_missing_column_families(true);
+		let rdb = rocksdb::DB::open_cf(
+			&ropts,
+			dbdir.path().join("testdb"), &["data", "journal"]
+		).unwrap();
+		let mut db = RocksRevDB::new(rdb, "data".into(), "journal".into()).unwrap();
+
+		assert_eq!(db.revision(), 0);
+		assert_eq!(db.get(0, &vec![1]), Ok(None));
+
+		db.commit(vec![(vec![1], Some(vec![5]))]).unwrap();
+		db.commit(vec![(vec![1], Some(vec![7]))]).unwrap();
+		db.commit(vec![(vec![1], None)]).unwrap();
+		db.commit(vec![(vec![1], Some(vec![9]))]).unwrap();
+
+		assert_eq!(db.revision(), 4);
+		assert_eq!(db.get(1, &vec![1]), Ok(Some(vec![5])));
+		assert_eq!(db.get(2, &vec![1]), Ok(Some(vec![7])));
+		assert_eq!(db.get(3, &vec![1]), Ok(None));
+		assert_eq!(db.get(4, &vec![1]), Ok(Some(vec![9])));
+
+		db.revert_to(2).unwrap();
+		assert_eq!(db.get(1, &vec![1]), Ok(Some(vec![5])));
+		assert_eq!(db.get(2, &vec![1]), Ok(Some(vec![7])));
+		assert_eq!(db.get(3, &vec![1]), Err(RocksRevDBError::NoRevision));
+		assert_eq!(db.get(4, &vec![1]), Err(RocksRevDBError::NoRevision));
 	}
 }
