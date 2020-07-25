@@ -23,7 +23,7 @@ impl<K: Ord + Clone, V: Clone> RevDB for MemoryRevDB<K, V> {
 		self.revision
 	}
 
-    fn revert_to(&mut self, target: u64) -> Result<(), Self::Error> {
+    fn revert_to(&mut self, target: Revision) -> Result<(), Self::Error> {
 		if target > self.revision {
 			return Err(MemoryRevDBError::InvalidRevertTarget)
 		}
@@ -46,7 +46,7 @@ impl<K: Ord + Clone, V: Clone> RevDB for MemoryRevDB<K, V> {
 		Ok(())
 	}
 
-    fn get(&self, target: u64, key: &Self::Key) -> Result<Self::Value, Self::Error> {
+    fn get(&self, target: Revision, key: &Self::Key) -> Result<Self::Value, Self::Error> {
 		if let Some(rvalues) = self.db.get(key) {
 			for (revision, value) in rvalues.iter().rev() {
 				if *revision <= target {

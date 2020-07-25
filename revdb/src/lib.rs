@@ -1,8 +1,10 @@
 extern crate alloc;
 
 mod memory;
+mod rocksdb;
 
 pub use crate::memory::{MemoryRevDB, MemoryRevDBError};
+pub use crate::rocksdb::{RocksRevDB, RocksRevDBError};
 
 /// Revision type.
 pub type Revision = u64;
