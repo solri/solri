@@ -37,6 +37,22 @@ fn make_key(revision: Revision, key: &Vec<u8>) -> Vec<u8> {
 }
 
 impl RocksRevDB {
+	pub fn new(
+		db: DB,
+		data_cf: ColumnFamily,
+		journal_cf: ColumnFamily,
+	) -> Result<Self, RocksRevDBError> {
+		let mut this = Self {
+			db,
+			data_cf,
+			journal_cf,
+			revision: 0,
+		};
+
+		this.revision = this.fetch_revision()?;
+		Ok(this)
+	}
+
 	fn fetch_revision(&self) -> Result<Revision, RocksRevDBError> {
 		let revraw = self.db.get_cf(&self.journal_cf, b"revision")?;
 
