@@ -14,33 +14,41 @@ use engine::{GenericBlock, CodeExternalities};
 use bm::{InMemoryBackend, ReadBackend, WriteBackend, DynBackend};
 
 fn main() {
-    let matches = App::new("Solri")
+	let matches = App::new("Solri")
 		.setting(AppSettings::SubcommandRequiredElseHelp)
-		.subcommand(SubCommand::with_name("local")
-					.about("Start a local test network"))
-		.subcommand(SubCommand::with_name("libp2p")
-					.about("Start a libp2p instance")
-					.arg(Arg::with_name("port")
-						 .short("p")
-						 .long("port")
-						 .takes_value(true)
-						 .help("Port to listen on"))
-					.arg(Arg::with_name("author")
-						 .long("author")
-						 .help("Whether to author blocks")))
+		.subcommand(
+			SubCommand::with_name("local")
+				.about("Start a local test network")
+		)
+		.subcommand(
+			SubCommand::with_name("libp2p")
+				.about("Start a libp2p instance")
+				.arg(
+					Arg::with_name("port")
+						.short("p")
+						.long("port")
+						.takes_value(true)
+						.help("Port to listen on")
+				)
+				.arg(
+					Arg::with_name("author")
+						.long("author")
+						.help("Whether to author blocks")
+				)
+		)
 		.get_matches();
 
-    if let Some(_) = matches.subcommand_matches("local") {
+	if let Some(_) = matches.subcommand_matches("local") {
 		local_sync();
 		return
-    }
+	}
 
-    if let Some(matches) = matches.subcommand_matches("libp2p") {
+	if let Some(matches) = matches.subcommand_matches("libp2p") {
 		let port = matches.value_of("port").unwrap_or("37365");
 		let author = matches.is_present("author");
 		libp2p_sync(port, author);
 		return
-    }
+	}
 }
 
 #[derive(Debug)]
@@ -62,9 +70,9 @@ impl CodeExternalities for State {
 	fn code_mut(&mut self) -> &mut Vec<u8> { &mut self.code }
 }
 impl AsExternalities<dyn CodeExternalities> for State {
-    fn as_externalities(&mut self) -> &mut (dyn CodeExternalities + 'static) {
-        self
-    }
+	fn as_externalities(&mut self) -> &mut (dyn CodeExternalities + 'static) {
+		self
+	}
 }
 
 impl TrieExternalities for State {
@@ -149,21 +157,21 @@ impl<Ba: ChainQuery + Store<Block=GenericBlock, State=State, Auxiliary=()>> Bloc
 }
 
 fn local_sync() {
-    let runtime_genesis_block = runtime::Block::genesis();
+	let runtime_genesis_block = runtime::Block::genesis();
 	let genesis_block: engine::GenericBlock = runtime_genesis_block.clone().into();
 	let genesis_state = State {
 		code: runtime::WASM_BINARY.to_vec(),
 		trie: Some(Default::default()),
 	};
-    let (backend_build, lock_build) = (
+	let (backend_build, lock_build) = (
 		SharedMemoryBackend::<_, (), State>::new_with_genesis(
 			genesis_block.clone(),
 			genesis_state.clone(),
 		),
 		ImportLock::new()
-    );
-    let mut peers = HashMap::new();
-    for peer_id in 0..4 {
+	);
+	let mut peers = HashMap::new();
+	for peer_id in 0..4 {
 		let (backend, lock) = if peer_id == 0 {
 			(backend_build.clone(), lock_build.clone())
 		} else {
@@ -178,43 +186,43 @@ fn local_sync() {
 		let importer = BestDepthImporter::new(backend.clone(), lock.clone());
 		let status = BestDepthStatusProducer::new(backend.clone());
 		peers.insert(peer_id, (backend, lock, importer, status));
-    }
-    thread::spawn(move || {
+	}
+	thread::spawn(move || {
 		builder_thread(backend_build, lock_build);
-    });
+	});
 
-    blockchain_network_local::start_local_simple_sync(peers);
+	blockchain_network_local::start_local_simple_sync(peers);
 }
 
 fn libp2p_sync(port: &str, author: bool) {
-    let runtime_genesis_block = runtime::Block::genesis();
+	let runtime_genesis_block = runtime::Block::genesis();
 	let genesis_block: engine::GenericBlock = runtime_genesis_block.clone().into();
 	let genesis_state = State {
 		code: runtime::WASM_BINARY.to_vec(),
 		trie: Some(Default::default()),
 	};
-    let backend = SharedMemoryBackend::<_, (), State>::new_with_genesis(
+	let backend = SharedMemoryBackend::<_, (), State>::new_with_genesis(
 		genesis_block.clone(),
 		genesis_state,
-    );
-    let lock = ImportLock::new();
-    let importer = BestDepthImporter::new(backend.clone(), lock.clone());
-    let status = BestDepthStatusProducer::new(backend.clone());
-    if author {
+	);
+	let lock = ImportLock::new();
+	let importer = BestDepthImporter::new(backend.clone(), lock.clone());
+	let status = BestDepthStatusProducer::new(backend.clone());
+	if author {
 		let backend_build = backend.clone();
 		let lock_build = lock.clone();
 		thread::spawn(move || {
 			builder_thread(backend_build, lock_build);
 		});
-    }
-    blockchain_network_libp2p::start_network_simple_sync(port, backend, lock, importer, status);
+	}
+	blockchain_network_libp2p::start_network_simple_sync(port, backend, lock, importer, status);
 }
 
 fn builder_thread(backend_build: SharedMemoryBackend<engine::GenericBlock, (), State>, lock: ImportLock) {
-    loop {
+	loop {
 		build_one(&backend_build, &lock).unwrap();
 		std::thread::sleep(std::time::Duration::new(1, 0));
-    }
+	}
 }
 
 fn build_one<Ba>(backend_build: &Ba, lock: &ImportLock) -> Result<(), Error> where
@@ -242,8 +250,8 @@ fn build_one<Ba>(backend_build: &Ba, lock: &ImportLock) -> Result<(), Error> whe
 	).map_err(|e| Error::NativeExecutor(Box::new(e)))?;
 
 	runtime_executor.apply_extrinsic(
-        &mut unsealed_block, runtime::Extrinsic::Add(1), &mut pending_state
-    ).map_err(|e| Error::NativeExecutor(Box::new(e)))?;
+		&mut unsealed_block, runtime::Extrinsic::Add(1), &mut pending_state
+	).map_err(|e| Error::NativeExecutor(Box::new(e)))?;
 
 	runtime_executor.finalize_block(
 		&mut unsealed_block, &mut pending_state

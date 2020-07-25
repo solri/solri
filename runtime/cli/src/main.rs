@@ -4,8 +4,10 @@ use std::io::Write;
 
 fn main() {
 	let matches = App::new("Solri")
-		.arg(Arg::with_name("file")
-			 .takes_value(true))
+		.arg(
+			Arg::with_name("file")
+				.takes_value(true)
+		)
 		.get_matches();
 
 	let file_name = matches.value_of("file").unwrap();

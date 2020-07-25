@@ -14,18 +14,25 @@ use crate::runtime::{Block, Executor};
 fn main() {
 	let matches = App::new("Blockchain counter demo")
 		.setting(AppSettings::SubcommandRequiredElseHelp)
-		.subcommand(SubCommand::with_name("local")
-					.about("Start a local test network"))
-		.subcommand(SubCommand::with_name("libp2p")
-					.about("Start a libp2p instance")
-					.arg(Arg::with_name("port")
-						 .short("p")
-						 .long("port")
-						 .takes_value(true)
-						 .help("Port to listen on"))
-					.arg(Arg::with_name("author")
-						 .long("author")
-						 .help("Whether to author blocks")))
+		.subcommand(
+			SubCommand::with_name("local")
+				.about("Start a local test network")
+		)
+		.subcommand(
+			SubCommand::with_name("libp2p")
+				.about("Start a libp2p instance")
+				.arg(
+					Arg::with_name("port")
+						.short("p")
+						.long("port")
+						.takes_value(true)
+						.help("Port to listen on"))
+				.arg(
+					Arg::with_name("author")
+						.long("author")
+						.help("Whether to author blocks")
+				)
+		)
 		.get_matches();
 
 	if let Some(_) = matches.subcommand_matches("local") {

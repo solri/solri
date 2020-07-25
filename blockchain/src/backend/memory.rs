@@ -73,8 +73,10 @@ impl<B: Block, A: Auxiliary<B>, S: Clone> ChainQuery for MemoryDatabase<B, A, S>
 		&self,
 		depth: usize,
 	) -> Result<Option<B::Identifier>, Error> {
-		Ok(self.canon_depth_mappings.get(&depth)
-		   .map(|h| h.clone()))
+		Ok(
+			self.canon_depth_mappings.get(&depth)
+				.map(|h| h.clone())
+		)
 	}
 
 	fn auxiliary(
@@ -98,8 +100,8 @@ impl<B: Block, A: Auxiliary<B>, S: Clone> ChainQuery for MemoryDatabase<B, A, S>
 		id: &B::Identifier
 	) -> Result<usize, Error> {
 		self.blocks_and_states.get(id)
-		   .map(|data| data.depth)
-		   .ok_or(Error::NotExist)
+			.map(|data| data.depth)
+			.ok_or(Error::NotExist)
 	}
 
 	fn block_at(

@@ -37,7 +37,7 @@ impl<K: Ord + Clone, V: Clone> RevDB for MemoryRevDB<K, V> {
 		self.revision
 	}
 
-    fn revert_to(&mut self, target: Revision) -> Result<(), Self::Error> {
+	fn revert_to(&mut self, target: Revision) -> Result<(), Self::Error> {
 		if target > self.revision {
 			return Err(MemoryRevDBError::InvalidRevertTarget)
 		}
@@ -62,7 +62,7 @@ impl<K: Ord + Clone, V: Clone> RevDB for MemoryRevDB<K, V> {
 		Ok(())
 	}
 
-    fn get(&self, target: Revision, key: &Self::Key) -> Result<Self::Value, Self::Error> {
+	fn get(&self, target: Revision, key: &Self::Key) -> Result<Self::Value, Self::Error> {
 		if target > self.revision {
 			return Err(MemoryRevDBError::NoRevision)
 		}
@@ -78,10 +78,10 @@ impl<K: Ord + Clone, V: Clone> RevDB for MemoryRevDB<K, V> {
 		Ok(None)
 	}
 
-    fn commit(
-        &mut self,
-        values: impl IntoIterator<Item=(Self::Key, Self::Value)>
-    ) -> Result<Revision, Self::Error> {
+	fn commit(
+		&mut self,
+		values: impl IntoIterator<Item=(Self::Key, Self::Value)>
+	) -> Result<Revision, Self::Error> {
 		let new = self.revision + 1;
 
 		let mut keys = Vec::new();

@@ -12,22 +12,22 @@ pub type Revision = u64;
 /// Revision database.
 pub trait RevDB {
 	/// Key type.
-    type Key;
+	type Key;
 	/// Value type.
-    type Value;
+	type Value;
 	/// Error type.
-    type Error;
+	type Error;
 
-    /// Current revision of the database.
-    fn revision(&self) -> Revision;
-    /// Revert the database back to an earlier revision.
-    fn revert_to(&mut self, revision: u64) -> Result<(), Self::Error>;
-    /// Get value from the database, of a revision.
-    fn get(&self, revision: u64, key: &Self::Key) -> Result<Self::Value, Self::Error>;
-    /// Commit values into the database to form a new revision,
-    /// returns the new revision number.
-    fn commit(
-        &mut self,
-        values: impl IntoIterator<Item=(Self::Key, Self::Value)>
-    ) -> Result<Revision, Self::Error>;
+	/// Current revision of the database.
+	fn revision(&self) -> Revision;
+	/// Revert the database back to an earlier revision.
+	fn revert_to(&mut self, revision: u64) -> Result<(), Self::Error>;
+	/// Get value from the database, of a revision.
+	fn get(&self, revision: u64, key: &Self::Key) -> Result<Self::Value, Self::Error>;
+	/// Commit values into the database to form a new revision,
+	/// returns the new revision number.
+	fn commit(
+		&mut self,
+		values: impl IntoIterator<Item=(Self::Key, Self::Value)>
+	) -> Result<Revision, Self::Error>;
 }

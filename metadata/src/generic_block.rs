@@ -14,13 +14,13 @@ pub struct GenericBlock {
 }
 
 impl BlockT for GenericBlock {
-    type Identifier = Vec<u8>;
+	type Identifier = Vec<u8>;
 
-    fn parent_id(&self) -> Option<Vec<u8>> {
+	fn parent_id(&self) -> Option<Vec<u8>> {
 		self.parent_id.clone()
-    }
+	}
 
-    fn id(&self) -> Vec<u8> {
+	fn id(&self) -> Vec<u8> {
 		self.id.clone()
-    }
+	}
 }

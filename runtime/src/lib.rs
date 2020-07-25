@@ -15,8 +15,10 @@ use parity_codec::{Encode, Decode};
 use blockchain_core::{Block as BlockT, BlockExecutor, AsExternalities, ExtrinsicBuilder};
 use sha3::Sha3_256;
 use primitive_types::H256;
-use bm::{CompactValue, ProvingState, Proofs, ReadBackend, WriteBackend, DynBackend,
-		 InMemoryBackend, ProvingBackend, Tree};
+use bm::{
+	CompactValue, ProvingState, Proofs, ReadBackend, WriteBackend, DynBackend,
+	InMemoryBackend, ProvingBackend, Tree
+};
 use bm_le::{FromTree, IntoTree, Value, tree_root};
 use metadata::GenericBlock;
 
@@ -316,7 +318,9 @@ mod tests {
 	#[test]
 	fn header_id_equal_id() {
 		let block = Block::genesis();
-		assert_eq!(tree_root::<Sha3_256, _>(&block),
-				   tree_root::<Sha3_256, _>(&Header::from(block.clone())));
+		assert_eq!(
+			tree_root::<Sha3_256, _>(&block),
+			tree_root::<Sha3_256, _>(&Header::from(block.clone()))
+		);
 	}
 }

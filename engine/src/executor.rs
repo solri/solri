@@ -12,15 +12,15 @@ pub trait CodeExternalities {
 pub struct Executor;
 
 impl BlockExecutor for Executor {
-    type Error = Error;
-    type Block = GenericBlock;
-    type Externalities = dyn CodeExternalities + 'static;
+	type Error = Error;
+	type Block = GenericBlock;
+	type Externalities = dyn CodeExternalities + 'static;
 
-    fn execute_block(
+	fn execute_block(
 		&self,
 		block: &Self::Block,
 		state: &mut Self::Externalities,
-    ) -> Result<(), Error> {
+	) -> Result<(), Error> {
 		let instance = Instance::new(Arc::new(state.code().to_vec()))?;
 		let metadata = instance.execute(&block.data)?;
 
@@ -34,5 +34,5 @@ impl BlockExecutor for Executor {
 		*state.code_mut() = metadata.code.clone();
 
 		Ok(())
-    }
+	}
 }

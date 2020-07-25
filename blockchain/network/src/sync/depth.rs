@@ -59,9 +59,9 @@ pub enum BestDepthError {
 }
 
 impl std::fmt::Display for BestDepthError {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+	fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
 		write!(f, "{:?}", self)
-    }
+	}
 }
 
 impl std::error::Error for BestDepthError { }

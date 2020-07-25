@@ -163,7 +163,7 @@ impl RevDB for RocksRevDB {
 		self.revision
 	}
 
-    fn revert_to(&mut self, target: u64) -> Result<(), Self::Error> {
+	fn revert_to(&mut self, target: u64) -> Result<(), Self::Error> {
 		if target > self.revision {
 			return Err(RocksRevDBError::InvalidRevertTarget)
 		}
@@ -184,7 +184,7 @@ impl RevDB for RocksRevDB {
 		Ok(())
 	}
 
-    fn get(&self, target: Revision, key: &Self::Key) -> Result<Self::Value, Self::Error> {
+	fn get(&self, target: Revision, key: &Self::Key) -> Result<Self::Value, Self::Error> {
 		if target > self.revision {
 			return Err(RocksRevDBError::NoRevision)
 		}
@@ -192,10 +192,10 @@ impl RevDB for RocksRevDB {
 		self.fetch_key(target, key)
 	}
 
-    fn commit(
-        &mut self,
-        values: impl IntoIterator<Item=(Self::Key, Self::Value)>
-    ) -> Result<Revision, Self::Error> {
+	fn commit(
+		&mut self,
+		values: impl IntoIterator<Item=(Self::Key, Self::Value)>
+	) -> Result<Revision, Self::Error> {
 		let new = self.revision + 1;
 
 		let mut keys = Vec::new();
