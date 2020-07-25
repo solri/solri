@@ -28,7 +28,6 @@ pub struct RocksRevDB {
 	revision: Revision,
 }
 
-
 fn make_key(revision: Revision, key: &Vec<u8>) -> Vec<u8> {
 	let mut key = key.clone();
 	let mut revvec = (Revision::max_value() - revision).to_le_bytes()[..].to_vec();
