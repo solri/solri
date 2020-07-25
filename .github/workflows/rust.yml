@@ -1,0 +1,30 @@
+name: Rust
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    name: 'Run tests'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Init
+      run: |
+        rustup update $WASM_BUILD_TOOLCHAIN
+        rustup update stable
+        rustup target add wasm32-unknown-unknown --toolchain $WASM_BUILD_TOOLCHAIN
+
+        cargo --version
+        rustc --version
+        cargo +$WASM_BUILD_TOOLCHAIN --version
+        rustc +$WASM_BUILD_TOOLCHAIN --version
+      env:
+        WASM_BUILD_TOOLCHAIN: nightly-2020-05-14
+    - name: Build
+      run: cargo build --verbose --all
+    - name: Run tests
+      run: cargo test --verbose --all
