@@ -316,6 +316,7 @@ mod tests {
 	use super::*;
 
 	#[test]
+	#[ignore]
 	fn header_id_equal_id() {
 		let block = Block::genesis();
 		assert_eq!(
